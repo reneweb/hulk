@@ -8,7 +8,7 @@ import akka.http.scaladsl.model._
 case class CoastHttpRequest(method: HttpMethod, uri: Uri, httpHeader: Seq[HttpHeader], body: RequestEntity)(implicit akkaHttpRequest: HttpRequest)
 
 object CoastHttpRequest {
-  implicit private[coast] def fromAkkaHttpRequest(implicit httpRequest: HttpRequest): CoastHttpRequest = {
+  implicit private[coast] def fromAkkaHttpRequest(httpRequest: HttpRequest): CoastHttpRequest = {
     CoastHttpRequest(httpRequest.method, httpRequest.uri, httpRequest.headers, httpRequest.entity)
   }
 }
