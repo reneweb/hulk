@@ -11,4 +11,8 @@ object RoutingHttpRequest {
   implicit private[coast] def fromAkkaHttpRequest(httpRequest: HttpRequest): RoutingHttpRequest = {
     RoutingHttpRequest(httpRequest.method, httpRequest.uri)
   }
+
+  implicit private[coast] def fromCoastHttpRequest(httpRequest: CoastHttpRequest): RoutingHttpRequest = {
+    RoutingHttpRequest(httpRequest.method, httpRequest.uri)
+  }
 }
