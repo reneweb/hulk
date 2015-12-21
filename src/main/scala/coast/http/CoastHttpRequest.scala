@@ -9,6 +9,6 @@ case class CoastHttpRequest(method: HttpMethod, uri: Uri, httpHeader: Seq[HttpHe
 
 object CoastHttpRequest {
   implicit private[coast] def fromAkkaHttpRequest(httpRequest: HttpRequest): CoastHttpRequest = {
-    CoastHttpRequest(httpRequest.method, httpRequest.uri, httpRequest.headers, httpRequest.entity)
+    CoastHttpRequest(httpRequest.method, httpRequest.uri, httpRequest.headers, httpRequest.entity)(httpRequest)
   }
 }

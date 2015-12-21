@@ -11,14 +11,15 @@ import coast.http.RoutingHttpRequest._
 import coast.http.CoastHttpRequest._
 import coast.http.CoastHttpResponse._
 import coast.routing.{Filter, Filters, Router}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Created by reweber on 18/12/2015
   */
 case class CoastHttpServer(router: Router, coastConfig: CoastConfig) {
 
-  implicit val actorSystem = ActorSystem
-  implicit val actorMaterializer = ActorMaterializer
+  implicit val actorSystem = ActorSystem()
+  implicit val actorMaterializer = ActorMaterializer()
 
   def run() = {
     router match {
@@ -29,7 +30,7 @@ case class CoastHttpServer(router: Router, coastConfig: CoastConfig) {
 
   private def buildHttpServer(router: Router, filters: Filters) = {
 
-    val filterFunc = reduceFiltersIntoOne(filters)
+    val filterFunc = reduceFiltersIntoOneFunc(filters)
 
     val flow: Flow[HttpRequest, HttpResponse, Any] = Flow[HttpRequest]
       .map(filterFunc(_))
@@ -41,9 +42,13 @@ case class CoastHttpServer(router: Router, coastConfig: CoastConfig) {
     Http().bindAndHandle(flow, "localhost")
   }
 
-  private def reduceFiltersIntoOne(filters: Filters): (CoastHttpRequest => Option[CoastHttpRequest]) = {
-    filters.filters.reduce {
-      case (filter, filterOther) => filter.filter andThen (requestOption => requestOption.flatMap(filterOther.filter))
+  private def reduceFiltersIntoOneFunc(filters: Filters): (CoastHttpRequest => Option[CoastHttpRequest]) = {
+    if(filters.filters.isEmpty) {
+      req => Some(req)
+    } else {
+      filters.filters.map(_.filter).reduce[CoastHttpRequest => Option[CoastHttpRequest]] {
+        case (filterF, filterOtherF) => filterF andThen (resOpt => resOpt.flatMap(filterOtherF))
+      }
     }
   }
 }
