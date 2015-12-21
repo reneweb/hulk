@@ -22,7 +22,7 @@ case class CoastHttpServer(router: Router, coastConfig: CoastConfig) {
   def run() = {
     router match {
       case routerWithFilters: Filters =>
-      case _ =>
+      case _ => buildHttpServer(router)
     }
   }
 
