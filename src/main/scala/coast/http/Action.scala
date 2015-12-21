@@ -1,11 +1,12 @@
 package coast.http
 
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Created by reweber on 18/12/2015
   */
-class Action[A](f: Either[(CoastHttpRequest => CoastHttpResponse), (CoastHttpRequest => Future[CoastHttpResponse])]) {
+class Action(f: Either[(CoastHttpRequest => CoastHttpResponse), (CoastHttpRequest => Future[CoastHttpResponse])]) {
 
   def run(coastHttpRequest: CoastHttpRequest): Future[CoastHttpResponse] = {
     f match {
