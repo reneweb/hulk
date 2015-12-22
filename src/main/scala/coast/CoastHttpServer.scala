@@ -2,21 +2,27 @@ package coast
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{HttpResponse, HttpRequest}
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Flow
 import coast.config.CoastConfig
 import coast.http.CoastHttpRequest
-import coast.http.RoutingHttpRequest._
 import coast.http.CoastHttpRequest._
 import coast.http.CoastHttpResponse._
-import coast.routing.{Filter, Filters, Router}
+import coast.http.RoutingHttpRequest._
+import coast.routing.{Filters, Router}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Created by reweber on 18/12/2015
   */
-case class CoastHttpServer(router: Router, coastConfig: CoastConfig) {
+case class CoastHttpServer(router: Router, coastConfig: Option[CoastConfig]) {
+
+  val interface = coastConfig.flatMap(_.interface).getOrElse("localhost")
+  val port = coastConfig.flatMap(_.port).getOrElse(10000)
+  val serverSettingsOpt = coastConfig.flatMap(_.serverSettings)
+  val parallelism = coastConfig.flatMap(_.asyncParallelism).getOrElse(5)
 
   implicit val actorSystem = ActorSystem()
   implicit val actorMaterializer = ActorMaterializer()
@@ -37,9 +43,13 @@ case class CoastHttpServer(router: Router, coastConfig: CoastConfig) {
       .filter(_.isDefined)
       .map(_.get)
       .map(request => (request, router.router(request)))
-      .mapAsync(5){ case (request, action) => action.run(request).map(chr => chr) }
+      .mapAsync(parallelism){ case (request, action) => action.run(request).map(chr => chr) }
 
-    Http().bindAndHandle(flow, "localhost")
+    serverSettingsOpt.map { serverSettings =>
+      Http().bindAndHandle(flow, interface, port, serverSettings)
+    }.getOrElse {
+      Http().bindAndHandle(flow, interface, port)
+    }
   }
 
   private def reduceFiltersIntoOneFunc(filters: Filters): (CoastHttpRequest => Option[CoastHttpRequest]) = {
