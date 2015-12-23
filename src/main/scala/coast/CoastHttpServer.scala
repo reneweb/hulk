@@ -17,15 +17,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
   * Created by reweber on 18/12/2015
   */
-case class CoastHttpServer(router: Router, coastConfig: Option[CoastConfig]) {
+class CoastHttpServer(router: Router, coastConfig: Option[CoastConfig])
+                     (implicit actorSystem: ActorSystem, actorMaterializer: ActorMaterializer) {
 
   val interface = coastConfig.flatMap(_.interface).getOrElse("localhost")
   val port = coastConfig.flatMap(_.port).getOrElse(10000)
   val serverSettingsOpt = coastConfig.flatMap(_.serverSettings)
   val parallelism = coastConfig.flatMap(_.asyncParallelism).getOrElse(5)
-
-  implicit val actorSystem = ActorSystem()
-  implicit val actorMaterializer = ActorMaterializer()
 
   def run() = {
     router match {
@@ -60,5 +58,19 @@ case class CoastHttpServer(router: Router, coastConfig: Option[CoastConfig]) {
         case (filterF, filterOtherF) => filterF andThen (resOpt => resOpt.flatMap(filterOtherF))
       }
     }
+  }
+}
+
+object CoastHttpServer {
+
+  def apply(router: Router, coastConfig: Option[CoastConfig], actorSystem: ActorSystem, actorMaterializer: ActorMaterializer) = {
+    new CoastHttpServer(router, coastConfig)(actorSystem, actorMaterializer)
+  }
+
+  def apply(router: Router, coastConfig: Option[CoastConfig]) = {
+    implicit val actorSystem = ActorSystem()
+    implicit val actorMaterializer = ActorMaterializer()(actorSystem)
+
+    new CoastHttpServer(router, coastConfig)
   }
 }
