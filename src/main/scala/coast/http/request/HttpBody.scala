@@ -8,7 +8,7 @@ import akka.util.ByteString
 import cats.data.Xor
 import io.circe._
 import io.circe.parse._
-import org.xml.sax.SAXParseException
+import concurrent.duration._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -23,31 +23,23 @@ case class HttpBody(private val requestEntity: RequestEntity)(implicit actorMate
   def asStream(): Source[ByteString, AnyRef] = requestEntity.getDataBytes()
 
   def asRaw(): Future[ByteString] = {
-    requestEntity.getDataBytes().runWith(Sink.fold(ByteString()) { case (c, el) => c.concat(el) }, actorMaterializer)
+    requestEntity.toStrict(1 second).map(_.data)
   }
 
   def asJson(): Future[Json] = {
-    requestEntity.getDataBytes()
-      .runWith(Sink.fold(ByteString()) { case (c, el) => c.concat(el) }, actorMaterializer)
-      .map(s => Json.string(s.utf8String))
+    requestEntity.toStrict(1 second).map(e => Json.string(e.data.utf8String))
   }
 
   def asJson[A](implicit d: Decoder[A]): Future[Xor[Error, A]] = {
-    requestEntity.getDataBytes()
-      .runWith(Sink.fold(ByteString()) { case (c, el) => c.concat(el) }, actorMaterializer)
-      .map(s => decode[A](s.utf8String))
+    requestEntity.toStrict(1 second).map(e => decode[A](e.data.utf8String))
   }
 
   def asXml(): Future[Option[Elem]] = {
-    requestEntity.getDataBytes()
-      .runWith(Sink.fold(ByteString()) { case (c, el) => c.concat(el) }, actorMaterializer)
-      .map(s => Try(XML.loadString(s.utf8String)).toOption)
+    requestEntity.toStrict(1 second).map(e => Try(XML.loadString(e.data.utf8String)).toOption)
   }
 
   def asText(): Future[String] = {
-    requestEntity.getDataBytes()
-      .runWith(Sink.fold(ByteString()) { case (c, el) => c.concat(el) }, actorMaterializer)
-      .map(s => s.utf8String)
+    requestEntity.toStrict(1 second).map(e => e.data.utf8String)
   }
 }
 
