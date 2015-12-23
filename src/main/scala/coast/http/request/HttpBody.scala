@@ -8,9 +8,11 @@ import akka.util.ByteString
 import cats.data.Xor
 import io.circe._
 import io.circe.parse._
+import org.xml.sax.SAXParseException
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.util.Try
 import scala.xml.{Elem, XML}
 
 /**
@@ -36,10 +38,10 @@ case class HttpBody(private val requestEntity: RequestEntity)(implicit actorMate
       .map(s => decode[A](s.utf8String))
   }
 
-  def asXml(): Future[Elem] = {
+  def asXml(): Future[Option[Elem]] = {
     requestEntity.getDataBytes()
       .runWith(Sink.fold(ByteString()) { case (c, el) => c.concat(el) }, actorMaterializer)
-      .map(s => XML.loadString(s.utf8String))
+      .map(s => Try(XML.loadString(s.utf8String)).toOption)
   }
 
   def asText(): Future[String] = {
