@@ -18,7 +18,7 @@ import scala.xml.{Elem, XML}
 /**
   * Created by reweber on 22/12/2015
   */
-case class HttpBody(private val requestEntity: RequestEntity)(implicit actorMaterializer: ActorMaterializer) {
+case class HttpRequestBody(private val requestEntity: RequestEntity)(implicit actorMaterializer: ActorMaterializer) {
 
   def asStream(): Source[ByteString, AnyRef] = requestEntity.getDataBytes()
 
@@ -43,8 +43,8 @@ case class HttpBody(private val requestEntity: RequestEntity)(implicit actorMate
   }
 }
 
-object HttpBody {
-  implicit private[coast] def fromRequestEntity(requestEntity: RequestEntity)(implicit actorMaterializer: ActorMaterializer): HttpBody = {
-    HttpBody(requestEntity)(actorMaterializer)
+object HttpRequestBody {
+  implicit private[coast] def fromRequestEntity(requestEntity: RequestEntity)(implicit actorMaterializer: ActorMaterializer): HttpRequestBody = {
+    HttpRequestBody(requestEntity)(actorMaterializer)
   }
 }
