@@ -6,10 +6,3 @@ package coast.http.response
 trait HttpResponseBodyWriter[A <: ResponseFormat] {
   def apply(): HttpResponseBody
 }
-
-trait ResponseFormat
-
-trait Json extends ResponseFormat
-trait Xml extends ResponseFormat
-trait Text extends ResponseFormat
-trait Binary extends ResponseFormat
