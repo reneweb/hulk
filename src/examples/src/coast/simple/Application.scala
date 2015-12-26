@@ -2,7 +2,7 @@ package coast.simple
 
 import akka.http.scaladsl.model.{HttpMethods, Uri}
 import coast.CoastHttpServer
-import coast.http.{AsyncAction, Ok, Action, RoutingHttpRequest}
+import coast.http._
 import coast.routing.Router
 import io.circe.Json
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -18,10 +18,12 @@ object Application extends App {
 
 class SimpleRouter() extends Router {
   val simpleController = new SimpleController()
+  val notFoundController = new NotFoundController()
 
   override def router: (RoutingHttpRequest) => Action = {
     case RoutingHttpRequest(HttpMethods.GET, Uri.Path("/test")) => simpleController.testGet
     case RoutingHttpRequest(HttpMethods.POST, Uri.Path("/test")) => simpleController.testPost
+    case _ => notFoundController.testNotFound
   }
 }
 
@@ -32,5 +34,11 @@ class SimpleController() {
 
   def testPost = AsyncAction { request =>
     request.body.asJson().map(Ok(_))
+  }
+}
+
+class NotFoundController() {
+  def testNotFound = Action { request =>
+    NotFound()
   }
 }
