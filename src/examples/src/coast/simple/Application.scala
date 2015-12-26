@@ -13,7 +13,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object Application extends App {
 
   val router = new SimpleRouter()
-  CoastHttpServer(router, None).run()
+  CoastHttpServer(router).run()
 }
 
 class SimpleRouter() extends Router {
