@@ -24,7 +24,15 @@ object HttpResponseBodyWriter {
   implicit def xmlToHttpResponseBodyWriter(xmlElem: Elem): HttpResponseBodyWriter[Xml] = {
     new HttpResponseBodyWriter[Xml] {
       override def apply(): HttpResponseBody = {
-        HttpResponseBody(ContentTypes.`application/json`, ByteString(xmlElem.mkString))
+        HttpResponseBody(ContentTypes.`text/xml(UTF-8)`, ByteString(xmlElem.mkString))
+      }
+    }
+  }
+
+  implicit def stringToHttpResponseBodyWriter(text: String): HttpResponseBodyWriter[Text] = {
+    new HttpResponseBodyWriter[Text] {
+      override def apply(): HttpResponseBody = {
+        HttpResponseBody(ContentTypes.`text/plain(UTF-8)`, ByteString(text))
       }
     }
   }
