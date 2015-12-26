@@ -1,6 +1,9 @@
+import sbt._
+import Keys._
+
 name := "coast"
 
-version := "1.0"
+version := "0.1.0"
 
 scalaVersion := "2.11.7"
 
@@ -12,4 +15,3 @@ libraryDependencies ++= Seq (
   "io.circe" %% "circe-parse" % "0.2.1",
   "org.scala-lang.modules" % "scala-xml_2.11" % "1.0.5"
 )
-    
