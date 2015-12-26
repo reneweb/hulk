@@ -3,6 +3,8 @@ package coast.http.response
 import akka.http.scaladsl.model.ContentTypes
 import akka.util.ByteString
 
+import scala.xml.Elem
+
 /**
   * Created by reweber on 24/12/2015
   */
