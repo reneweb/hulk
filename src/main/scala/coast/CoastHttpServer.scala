@@ -67,7 +67,7 @@ object CoastHttpServer {
     new CoastHttpServer(router, coastConfig)(actorSystem, actorMaterializer)
   }
 
-  def apply(router: Router, coastConfig: Option[CoastConfig]) = {
+  def apply(router: Router, coastConfig: Option[CoastConfig] = None) = {
     implicit val actorSystem = ActorSystem()
     implicit val actorMaterializer = ActorMaterializer()(actorSystem)
 
