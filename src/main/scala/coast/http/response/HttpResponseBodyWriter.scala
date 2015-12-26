@@ -44,4 +44,12 @@ object HttpResponseBodyWriter {
       }
     }
   }
+
+  implicit def byteArrayAsBinaryToHttpResponseBodyWriter(bytes: Array[Byte]): HttpResponseBodyWriter[Binary] = {
+    new HttpResponseBodyWriter[Binary] {
+      override def apply(): HttpResponseBody = {
+        HttpResponseBody(ContentTypes.`application/octet-stream`, ByteString(bytes))
+      }
+    }
+  }
 }
