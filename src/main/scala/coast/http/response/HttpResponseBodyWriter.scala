@@ -20,4 +20,12 @@ object HttpResponseBodyWriter {
       }
     }
   }
+
+  implicit def xmlToHttpResponseBodyWriter(xmlElem: Elem): HttpResponseBodyWriter[Xml] = {
+    new HttpResponseBodyWriter[Xml] {
+      override def apply(): HttpResponseBody = {
+        HttpResponseBody(ContentTypes.`application/json`, ByteString(xmlElem.mkString))
+      }
+    }
+  }
 }
