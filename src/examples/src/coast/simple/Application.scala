@@ -27,7 +27,7 @@ class SimpleRouter() extends Router {
 
 class SimpleController() {
   def testGet = Action { request =>
-    Ok(Json.empty)
+    Ok()
   }
 
   def testPost = AsyncAction { request =>
