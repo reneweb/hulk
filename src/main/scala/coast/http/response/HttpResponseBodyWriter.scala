@@ -36,4 +36,12 @@ object HttpResponseBodyWriter {
       }
     }
   }
+
+  implicit def stringAsHtmlToHttpResponseBodyWriter(text: String): HttpResponseBodyWriter[Html] = {
+    new HttpResponseBodyWriter[Html] {
+      override def apply(): HttpResponseBody = {
+        HttpResponseBody(ContentTypes.`text/html(UTF-8)`, ByteString(text))
+      }
+    }
+  }
 }
