@@ -4,7 +4,7 @@ import akka.http.scaladsl.model.{HttpMethods, Uri}
 import coast.CoastHttpServer
 import coast.http._
 import coast.routing.Router
-import io.circe.Json
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
