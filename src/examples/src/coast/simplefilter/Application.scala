@@ -61,6 +61,8 @@ class SimpleController() {
   }
 
   def testPost = AsyncAction { request =>
-    request.body.asJson().map(Ok(_))
+    request.body.asJson().map{ jsonOpt =>
+      jsonOpt.map(Ok(_)).getOrElse(BadRequest())
+    }
   }
 }
