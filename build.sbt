@@ -1,17 +1,29 @@
 import sbt._
-import Keys._
+import sbt.Keys._
 
-name := "coast"
-
-version := "0.1.0"
-
-scalaVersion := "2.11.7"
-
-libraryDependencies ++= Seq (
-  "com.typesafe.akka" % "akka-http-experimental_2.11" % "2.0",
-
-  "io.circe" %% "circe-core" % "0.2.1",
-  "io.circe" %% "circe-generic" % "0.2.1",
-  "io.circe" %% "circe-parse" % "0.2.1",
-  "org.scala-lang.modules" % "scala-xml_2.11" % "1.0.5"
+lazy val commonSettings = Seq(
+  name := "coast",
+  version := "0.1.0",
+  scalaVersion := "2.11.7",
+  crossScalaVersions := Seq("2.10.6", "2.11.7")
 )
+
+lazy val root = (project in file("."))
+  .aggregate(framework, examples)
+
+lazy val framework = project
+  .settings(commonSettings: _*)
+  .settings(moduleName := "framework")
+  .settings(libraryDependencies ++= Seq (
+    "com.typesafe.akka" % "akka-http-experimental_2.11" % "2.0",
+
+    "io.circe" %% "circe-core" % "0.2.1",
+    "io.circe" %% "circe-generic" % "0.2.1",
+    "io.circe" %% "circe-parse" % "0.2.1",
+    "org.scala-lang.modules" % "scala-xml_2.11" % "1.0.5"
+  ))
+
+lazy val examples = project
+  .settings(commonSettings: _*)
+  .settings(moduleName := "examples")
+  .dependsOn(framework)
