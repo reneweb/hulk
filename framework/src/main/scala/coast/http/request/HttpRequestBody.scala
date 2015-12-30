@@ -1,10 +1,13 @@
 package coast.http.request
 
+import java.io.IOException
+
 import akka.http.scaladsl.model.RequestEntity
 import akka.stream.ActorMaterializer
 import akka.stream.javadsl.Source
 import akka.util.ByteString
 import cats.data.Xor
+import com.fasterxml.jackson.core.JsonParseException
 import play.api.libs.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -24,12 +27,12 @@ case class HttpRequestBody(private val requestEntity: RequestEntity)(implicit ac
     requestEntity.toStrict(1 second).map(_.data)
   }
 
-  def asJson(): Future[JsValue] = {
-    requestEntity.toStrict(1 second).map(e => Json.parse(e.data.utf8String))
+  def asJson(): Future[Option[JsValue]] = {
+    requestEntity.toStrict(1 second).map(e => parseStringToJsonOpt(e.data.utf8String))
   }
 
   def asJson[A](implicit d: Reads[A]): Future[JsResult[A]] = {
-    requestEntity.toStrict(1 second).map(e => Json.fromJson(Json.parse(e.data.utf8String)))
+    requestEntity.toStrict(1 second).map(e => parseStringToJsResult(e.data.utf8String).flatMap(j => Json.fromJson(j)))
   }
 
   def asXml(): Future[Option[Elem]] = {
@@ -39,6 +42,13 @@ case class HttpRequestBody(private val requestEntity: RequestEntity)(implicit ac
   def asText(): Future[String] = {
     requestEntity.toStrict(1 second).map(e => e.data.utf8String)
   }
+
+  private def parseStringToJsonOpt(jsonString: String): Option[JsValue] = Try(Json.parse(jsonString)).toOption
+
+  private def parseStringToJsResult(jsonString: String): JsResult[JsValue] = {
+    Try(JsSuccess(Json.parse(jsonString))).getOrElse(JsError("Could not parse body to json"))
+  }
+
 }
 
 object HttpRequestBody {
