@@ -4,7 +4,6 @@ import akka.http.scaladsl.model.{HttpMethods, Uri}
 import coast.CoastHttpServer
 import coast.http._
 import coast.routing._
-import io.circe.Json
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -61,8 +60,9 @@ class SimpleController() {
   }
 
   def testPost = AsyncAction { request =>
-    request.body.asJson().map{ jsonOpt =>
-      jsonOpt.map(Ok(_)).getOrElse(BadRequest())
-    }
+    //request.body.asJson().map{ jsonOpt =>
+    //  jsonOpt.map(Ok(_)).getOrElse(BadRequest())
+    //}
+    request.body.asJson().map(Ok(_))
   }
 }

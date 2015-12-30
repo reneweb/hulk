@@ -5,9 +5,7 @@ import akka.stream.ActorMaterializer
 import akka.stream.javadsl.Source
 import akka.util.ByteString
 import cats.data.Xor
-import io.circe._
-import io.circe.parse.decode
-import io.circe.parse.parse
+import play.api.libs.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -26,12 +24,12 @@ case class HttpRequestBody(private val requestEntity: RequestEntity)(implicit ac
     requestEntity.toStrict(1 second).map(_.data)
   }
 
-  def asJson(): Future[Option[Json]] = {
-    requestEntity.toStrict(1 second).map(e => parse(e.data.utf8String).toOption)
+  def asJson(): Future[JsValue] = {
+    requestEntity.toStrict(1 second).map(e => Json.parse(e.data.utf8String))
   }
 
-  def asJson[A](implicit d: Decoder[A]): Future[Xor[Error, A]] = {
-    requestEntity.toStrict(1 second).map(e => decode[A](e.data.utf8String))
+  def asJson[A](implicit d: Reads[A]): Future[JsResult[A]] = {
+    requestEntity.toStrict(1 second).map(e => Json.fromJson(Json.parse(e.data.utf8String)))
   }
 
   def asXml(): Future[Option[Elem]] = {

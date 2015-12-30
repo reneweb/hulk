@@ -2,6 +2,7 @@ package coast.http.response
 
 import akka.http.scaladsl.model.ContentTypes
 import akka.util.ByteString
+import play.api.libs.json.{Json, JsValue}
 
 import scala.xml.Elem
 
@@ -13,10 +14,10 @@ trait HttpResponseBodyWriter[A <: ResponseFormat] {
 }
 
 object HttpResponseBodyWriter {
-  implicit def jsonToHttpResponseBodyWriter(json: io.circe.Json): HttpResponseBodyWriter[Json] = {
+  implicit def jsonToHttpResponseBodyWriter(json: JsValue): HttpResponseBodyWriter[Json] = {
     new HttpResponseBodyWriter[Json] {
       override def apply(): HttpResponseBody = {
-        HttpResponseBody(ContentTypes.`application/json`, ByteString(json.spaces2))
+        HttpResponseBody(ContentTypes.`application/json`, ByteString(Json.stringify(json)))
       }
     }
   }
