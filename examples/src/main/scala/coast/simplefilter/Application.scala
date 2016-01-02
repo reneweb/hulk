@@ -3,7 +3,9 @@ package coast.simplefilter
 import akka.http.scaladsl.model.{HttpMethods, Uri}
 import coast.CoastHttpServer
 import coast.http._
+import coast.routing.Filter._
 import coast.routing._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -24,7 +26,7 @@ class SimpleRouter() extends Router with Filters {
     case RoutingHttpRequest(HttpMethods.POST, Uri.Path("/test")) => simpleController.testPost
   }
 
-  override def filters: Seq[Filter] = Seq(new SimpleAuthFilter, new SimpleLogRequestTimeFilter)
+  override def filters: Seq[Filter] = Seq(new SimpleLogRequestTimeFilter, new SimpleAuthFilter)
 }
 
 class SimpleAuthFilter extends Filter {
@@ -33,23 +35,23 @@ class SimpleAuthFilter extends Filter {
     false //We just default to false here
   }
 
-  override def filter: (CoastHttpRequest) => FilterResult = {
+  override def filter(next: Next): (CoastHttpRequest) => FilterResult = {
     case CoastHttpRequest(HttpMethods.POST, Uri.Path("/needsAuth"), _, _) =>
-      if(isAuthenticated) DontFilter() else IncomingFilter(Unauthorized())
-    case req: CoastHttpRequest => DontFilter()
+      if(isAuthenticated) next else Future(Unauthorized())
+    case req: CoastHttpRequest => next
   }
 }
 
 class SimpleLogRequestTimeFilter extends Filter {
-  override def filter: (CoastHttpRequest) => FilterResult = {
+  override def filter(next: Next): (CoastHttpRequest) => FilterResult = {
     case req: CoastHttpRequest =>
       val currTime = System.currentTimeMillis()
-      OutgoingFilter { response: CoastHttpResponse =>
+      next andThen { response =>
 
         val t = System.currentTimeMillis() - currTime
         println(s"$t ms")
 
-        Future(response)
+        response
       }
   }
 }

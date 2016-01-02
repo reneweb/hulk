@@ -7,9 +7,10 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Flow
 import coast.config.CoastConfig
 import coast.http.CoastHttpRequest._
+import coast.http.CoastHttpResponse
 import coast.http.CoastHttpResponse._
 import scala.concurrent.ExecutionContext.Implicits.global
-import coast.routing.{Filters, Router}
+import coast.routing.{Filter, Filters, Router}
 
 import scala.concurrent.Future
 
@@ -37,14 +38,14 @@ class CoastHttpServer(router: Router, coastConfig: Option[CoastConfig])
 
     val flow: Flow[HttpRequest, HttpResponse, Any] = Flow[HttpRequest]
       .mapAsync(parallelism) { request =>
-        val filterResults = filtersSeq.map(_.filter(request))
-        val incomingFilterResponseOpt = filterResults.filter(_.result.isLeft).lastOption.flatMap(_.result.swap.toOption)
+        val outgoingFilterResults = executeOutgoingFilters(filtersSeq, request)
+        val incomingFilterResultOpt = findIncomingFilter(filtersSeq, outgoingFilterResults.size)
 
-        val response = incomingFilterResponseOpt.getOrElse(router.router(request).run(request))
+        val runIncomingFilterWithRequest = runIncomingFilter(request) _
+        val response = incomingFilterResultOpt.map(runIncomingFilterWithRequest).getOrElse(router.router(request).run(request))
 
-        val outgoingFilterResults = filterResults.filter(_.result.isRight).map(_.result.toOption.get)
         outgoingFilterResults
-          .foldLeft(response){ case (resp, filter) => resp.flatMap(filter) }
+          .foldLeft(response){ case (resp, filterResult) => resp.flatMap(filterResult) }
           .map(toAkkaHttpResponse => toAkkaHttpResponse)
       }
 
@@ -53,6 +54,28 @@ class CoastHttpServer(router: Router, coastConfig: Option[CoastConfig])
     }.getOrElse {
       Http().bindAndHandle(flow, interface, port)
     }
+  }
+
+  private def findIncomingFilter(filtersSeq: Seq[Filter], outgoingFilterResultsSize: Int): Option[Filter] =
+    filtersSeq.lift(outgoingFilterResultsSize)
+
+  private def runIncomingFilter(request: HttpRequest)(filter: Filter) =
+    filter.filter(r => Future(r))(request).result.swap.toOption.get
+
+  private def executeOutgoingFilters(filters: Seq[Filter], httpRequest: HttpRequest) = {
+    def rec(filters: Seq[Filter], httpRequest: HttpRequest): Seq[CoastHttpResponse => Future[CoastHttpResponse]] =
+      filters.headOption.map(f => {
+        val filterResult = f.filter(r => Future(r))(httpRequest)
+
+        if(filterResult.result.isRight) {
+          val returnSeq = rec(filters.tail, httpRequest)
+          returnSeq :+ filterResult.result.toOption.get
+        } else {
+          Seq.empty
+        }
+      }).getOrElse(Seq.empty)
+
+    rec(filters, httpRequest).reverse
   }
 }
 
