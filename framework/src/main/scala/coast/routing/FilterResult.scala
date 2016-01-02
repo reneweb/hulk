@@ -2,6 +2,7 @@ package coast.routing
 
 import cats.data.Xor
 import coast.http.CoastHttpResponse
+import coast.routing.Filter.Next
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -11,15 +12,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
   */
 class FilterResult(val result: Xor[Future[CoastHttpResponse], CoastHttpResponse => Future[CoastHttpResponse]])
 
-object DontFilter {
-  def apply() = new FilterResult(Xor.right(Future(_)))
-}
+object FilterResult {
+  implicit def responseToFilterResult(coastHttpResponse: Future[CoastHttpResponse]): FilterResult =
+    new FilterResult(Xor.Left(coastHttpResponse))
 
-object IncomingFilter {
-  def apply(response: Future[CoastHttpResponse]) = new FilterResult(Xor.left(response))
-  def apply(response: CoastHttpResponse) = new FilterResult(Xor.left(Future(response)))
-}
-
-object OutgoingFilter {
-  def apply(responseFunc: CoastHttpResponse => Future[CoastHttpResponse]) = new FilterResult(Xor.right(responseFunc))
+  implicit def responseFuncToFilterResult(coastHttpResponseFunc: CoastHttpResponse => Future[CoastHttpResponse]): FilterResult =
+    new FilterResult(Xor.Right(coastHttpResponseFunc))
 }
