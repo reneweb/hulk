@@ -42,7 +42,6 @@ class CoastHttpServer(router: Router, coastConfig: Option[CoastConfig])
         val incomingFilterResultOpt = findIncomingFilter(filtersSeq, outgoingFilterResults.size)
 
         val runIncomingFilterWithRequest = runIncomingFilter(request) _
-        //TODO change router calls since it is a map now!
         val response = incomingFilterResultOpt.map(runIncomingFilterWithRequest).getOrElse(matchRequestToAction(router.router, request).run(request))
 
         outgoingFilterResults
