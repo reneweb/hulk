@@ -7,10 +7,10 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Flow
 import coast.config.CoastConfig
 import coast.http.CoastHttpRequest._
-import coast.http.CoastHttpResponse
+import coast.http.{NotFound, Action, CoastHttpResponse}
 import coast.http.CoastHttpResponse._
 import scala.concurrent.ExecutionContext.Implicits.global
-import coast.routing.{Filter, Filters, Router}
+import coast.routing.{RouteDef, Filter, Filters, Router}
 
 import scala.concurrent.Future
 
@@ -42,7 +42,8 @@ class CoastHttpServer(router: Router, coastConfig: Option[CoastConfig])
         val incomingFilterResultOpt = findIncomingFilter(filtersSeq, outgoingFilterResults.size)
 
         val runIncomingFilterWithRequest = runIncomingFilter(request) _
-        val response = incomingFilterResultOpt.map(runIncomingFilterWithRequest).getOrElse(router.router(request).run(request))
+        //TODO change router calls since it is a map now!
+        val response = incomingFilterResultOpt.map(runIncomingFilterWithRequest).getOrElse(matchRequestToAction(router.router, request).run(request))
 
         outgoingFilterResults
           .foldLeft(response){ case (resp, filterResult) => resp.flatMap(filterResult) }
@@ -54,6 +55,18 @@ class CoastHttpServer(router: Router, coastConfig: Option[CoastConfig])
     }.getOrElse {
       Http().bindAndHandle(flow, interface, port)
     }
+  }
+
+  private def matchRequestToAction(routes: Map[RouteDef, Action], request: HttpRequest): Action = {
+    def matchAnyMethod(routeDef: RouteDef) = routeDef.method.isEmpty
+    def matchAnyUri(routeDef: RouteDef) = routeDef.path.isEmpty
+
+    val method = request.method
+    val path = request.uri.path
+
+    routes.find { case (routeDef, action) =>
+      (routeDef.method.contains(method) || matchAnyMethod(routeDef)) && (routeDef.path.contains(path) || matchAnyUri(routeDef))
+    }.map(_._2).getOrElse(Action { request => NotFound() })
   }
 
   private def findIncomingFilter(filtersSeq: Seq[Filter], outgoingFilterResultsSize: Int): Option[Filter] =
