@@ -4,7 +4,7 @@ import akka.http.scaladsl.model.{HttpMethods, Uri}
 import coast.CoastHttpServer
 import coast.http._
 
-import coast.routing.{RouteDef, Router}
+import coast.routing.{*, RouteDef, Router}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -22,8 +22,8 @@ class SimpleRouter() extends Router {
   val notFoundController = new NotFoundController()
 
   override def router: Map[RouteDef, Action] = Map(
-    (HttpMethods.GET, Uri.Path("/test")) -> simpleController.testGet,
-    (HttpMethods.POST, Uri.Path("/test")) -> simpleController.testGet
+    (HttpMethods.GET, "/test") -> simpleController.testGet,
+    (HttpMethods.POST, "/test") -> simpleController.testPost
   )
 }
 
