@@ -22,8 +22,8 @@ class SimpleRouter() extends Router with Filters {
   val simpleController = new SimpleController()
 
   override def router: Map[RouteDef, Action] = Map(
-    (HttpMethods.GET, Uri.Path("/test")) -> simpleController.testGet,
-    (*, Uri.Path("/test")) -> simpleController.testGet
+    (HttpMethods.GET, "/test") -> simpleController.testGet,
+    (HttpMethods.POST, "/test") -> simpleController.testPost
   )
 
   override def filters: Seq[Filter] = Seq(new SimpleLogRequestTimeFilter, new SimpleAuthFilter)

@@ -63,8 +63,14 @@ class CoastHttpServer(router: Router, coastConfig: Option[CoastConfig])
     val method = request.method
     val path = request.uri.path
 
-    routes.find { case (routeDef, action) =>
-      (routeDef.method.contains(method) || matchAnyMethod(routeDef)) && (routeDef.path.contains(path) || matchAnyUri(routeDef))
+    val routesWithMatchingMethod = routes.filter { case (routeDef, _) => routeDef.method.contains(method) || matchAnyMethod(routeDef) }
+
+    routesWithMatchingMethod.find { case (routeDef, action) =>
+      val repl = ":\\{.*\\}".r.replaceAllIn(routeDef.path, r => {
+        r.toString().replace(":{", "(?<").replace("}", ">[^/]+)")
+      })
+
+      path.toString().matches(repl)
     }.map(_._2).getOrElse(Action { request => NotFound() })
   }
 
