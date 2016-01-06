@@ -36,7 +36,7 @@ class SimpleAuthFilter extends Filter {
   }
 
   override def filter(next: Next): (CoastHttpRequest) => FilterResult = {
-    case CoastHttpRequest(HttpMethods.POST, Uri.Path("/needsAuth"), _, _) =>
+    case CoastHttpRequest(HttpMethods.POST, Uri.Path("/needsAuth"), _, _, _) =>
       if(isAuthenticated) next else Future(Unauthorized())
     case req: CoastHttpRequest => next
   }
