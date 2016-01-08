@@ -2,19 +2,18 @@ package coast
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{HttpMethod, HttpResponse, HttpRequest}
+import akka.http.scaladsl.model.{HttpMethod, HttpRequest, HttpResponse}
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Flow
 import coast.config.CoastConfig
-import coast.http.CoastHttpRequest._
-import coast.http.{CoastHttpRequest, NotFound, Action, CoastHttpResponse}
 import coast.http.CoastHttpResponse._
-import scala.concurrent.ExecutionContext.Implicits.global
-import coast.routing.{RouteDef, Filter, Filters, Router}
+import coast.http.request.HttpRequestBody._
+import coast.http.{Action, CoastHttpRequest, CoastHttpResponse, NotFound}
+import coast.routing.{Filter, Filters, Router}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Try
-import coast.http.request.HttpRequestBody._
 
 /**
   * Created by reweber on 18/12/2015
@@ -51,7 +50,8 @@ class CoastHttpServer(router: Router, coastConfig: Option[CoastConfig])
         val matchedRoute = matchRequestToRoute(routesWithRegex, request)
         val pathVarMap = extractPathVariables(matchedRoute, request)
 
-        val coastHttpRequest = CoastHttpRequest(request.method, request.uri, request.headers, request.entity, pathVarMap)
+        val coastHttpRequest = CoastHttpRequest(request.method, request.uri.path.toString(), request.headers, request.entity)(pathVarMap,
+          request.uri.query(), request.uri.fragment)(request.cookies)
 
         val outgoingFilterResults = executeOutgoingFilters(filtersSeq, coastHttpRequest)
         val incomingFilterResultOpt = findIncomingFilter(filtersSeq, outgoingFilterResults.size)
