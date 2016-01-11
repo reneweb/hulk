@@ -5,7 +5,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpMethod, HttpRequest, HttpResponse}
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Flow
-import coast.config.CoastConfig
+import coast.config.{AcceptHeaderVersioning, AcceptVersionHeaderVersioning, CoastConfig, PathVersioning}
 import coast.http.CoastHttpResponse._
 import coast.http.request.HttpRequestBody._
 import coast.http.{Action, CoastHttpRequest, CoastHttpResponse, NotFound}
@@ -47,7 +47,11 @@ class CoastHttpServer(router: Router, coastConfig: Option[CoastConfig])
 
     val flow: Flow[HttpRequest, HttpResponse, Any] = Flow[HttpRequest]
       .mapAsync(parallelism) { implicit request =>
-        val matchedRoute = matchRequestToRoute(routesWithRegex, request)
+
+        val versionOpt: Option[String] = findVersion(request)
+        val preparedRequest = removeVersionFromRequestIfPathVersioned(request, versionOpt)
+
+        val matchedRoute = matchRequestToRoute(routesWithRegex, preparedRequest)
         val pathVarMap = extractPathVariables(matchedRoute, request)
 
         val coastHttpRequest = CoastHttpRequest(request.method, request.uri.path.toString(), request.headers, request.entity)(pathVarMap,
@@ -58,9 +62,7 @@ class CoastHttpServer(router: Router, coastConfig: Option[CoastConfig])
 
         val runIncomingFilterWithRequest = runIncomingFilter(coastHttpRequest) _
         val response = incomingFilterResultOpt.map(runIncomingFilterWithRequest)
-          .getOrElse {
-            matchedRoute.map(a => a._2.run(coastHttpRequest)).getOrElse(Action { req => NotFound() }.run(coastHttpRequest))
-          }
+          .getOrElse(runActionIfMatch(versionOpt, matchedRoute, coastHttpRequest))
 
         outgoingFilterResults
           .foldLeft(response){ case (resp, filterResult) => resp.flatMap(filterResult) }
@@ -71,6 +73,40 @@ class CoastHttpServer(router: Router, coastConfig: Option[CoastConfig])
       Http().bindAndHandle(flow, interface, port, serverSettings)
     }.getOrElse {
       Http().bindAndHandle(flow, interface, port)
+    }
+  }
+
+  def runActionIfMatch(versionOpt: Option[String], matchedRoute: Option[(RouteDefWithRegex, Action)], coastHttpRequest: CoastHttpRequest): Future[CoastHttpResponse] = {
+    matchedRoute.map { routeWithAction =>
+      runAction(versionOpt, coastHttpRequest, routeWithAction)
+    }.getOrElse(Action { req => NotFound() }.run(coastHttpRequest).get)
+  }
+
+  def runAction(versionOpt: Option[String], coastHttpRequest: CoastHttpRequest, routeWithAction: (RouteDefWithRegex, Action)): Future[CoastHttpResponse] = {
+    versionOpt.map { version =>
+      routeWithAction._2.run(version, coastHttpRequest).getOrElse(Future(NotFound()))
+    }.getOrElse {
+      routeWithAction._2.run(coastHttpRequest).getOrElse(Future(NotFound()))
+    }
+  }
+
+  def removeVersionFromRequestIfPathVersioned(request: HttpRequest, versionOpt: Option[String]): HttpRequest = {
+    coastConfig.flatMap { config =>
+      config.versioning.map { c => c match {
+        case p: PathVersioning => request.copy(uri = request.uri.copy(path = request.uri.path.dropChars(versionOpt.get.length + 1)))
+        case _ => request
+      }}
+    }.getOrElse(request)
+  }
+
+  def findVersion(request: HttpRequest): Option[String] = {
+    coastConfig.flatMap { config =>
+      config.versioning.flatMap { c => c match {
+        case p: PathVersioning => Some(request.uri.path.toString().drop(1).takeWhile(_ != '/'))
+        case a: AcceptHeaderVersioning => request.headers.find(_.name() == "Accept").flatMap(h => a.versionRegex.r.findFirstIn(h.value()))
+        case av: AcceptVersionHeaderVersioning => request.headers.find(_.name() == "AcceptVersion").map(_.value())
+        case _ => throw new IllegalArgumentException("Not a valid versioning strategy")
+      }}
     }
   }
 

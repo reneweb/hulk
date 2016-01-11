@@ -1,10 +1,9 @@
 package coast.simple
 
-import akka.http.scaladsl.model.{HttpMethods, Uri}
+import akka.http.scaladsl.model.HttpMethods
 import coast.CoastHttpServer
 import coast.http._
-
-import coast.routing.{*, RouteDef, Router}
+import coast.routing.{RouteDef, Router}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
