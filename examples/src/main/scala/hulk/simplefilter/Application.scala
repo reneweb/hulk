@@ -1,10 +1,10 @@
-package coast.simplefilter
+package hulk.simplefilter
 
 import akka.http.scaladsl.model.{HttpMethod, HttpMethods, Uri}
-import coast.CoastHttpServer
-import coast.http._
-import coast.routing.Filter._
-import coast.routing._
+import hulk.HulkHttpServer
+import hulk.http._
+import hulk.routing.Filter._
+import hulk.routing._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -15,7 +15,7 @@ import scala.concurrent.Future
 object Application extends App {
 
   val router = new SimpleRouter()
-  CoastHttpServer(router).run()
+  HulkHttpServer(router).run()
 }
 
 class SimpleRouter() extends Router with Filters {
@@ -35,16 +35,16 @@ class SimpleAuthFilter extends Filter {
     false //We just default to false here
   }
 
-  override def filter(next: Next): (CoastHttpRequest) => FilterResult = {
-    case CoastHttpRequest(HttpMethods.POST, "/needsAuth", _, _) =>
+  override def filter(next: Next): (HulkHttpRequest) => FilterResult = {
+    case HulkHttpRequest(HttpMethods.POST, "/needsAuth", _, _) =>
       if(isAuthenticated) next else Future(Unauthorized())
-    case req: CoastHttpRequest => next
+    case req: HulkHttpRequest => next
   }
 }
 
 class SimpleLogRequestTimeFilter extends Filter {
-  override def filter(next: Next): (CoastHttpRequest) => FilterResult = {
-    case req: CoastHttpRequest =>
+  override def filter(next: Next): (HulkHttpRequest) => FilterResult = {
+    case req: HulkHttpRequest =>
       val currTime = System.currentTimeMillis()
       next andThen { response =>
 

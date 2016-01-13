@@ -1,9 +1,9 @@
-package coast.simple
+package hulk.simple
 
 import akka.http.scaladsl.model.HttpMethods
-import coast.CoastHttpServer
-import coast.http._
-import coast.routing.{RouteDef, Router}
+import hulk.HulkHttpServer
+import hulk.http._
+import hulk.routing.{RouteDef, Router}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -13,7 +13,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object Application extends App {
 
   val router = new SimpleRouter()
-  CoastHttpServer(router).run()
+  HulkHttpServer(router).run()
 }
 
 class SimpleRouter() extends Router {

@@ -1,4 +1,4 @@
-package coast.http.response
+package hulk.http.response
 
 import akka.http.scaladsl.model.HttpEntity.Strict
 import akka.http.scaladsl.model.{ContentType, ResponseEntity}
@@ -10,7 +10,7 @@ import akka.util.ByteString
 case class HttpResponseBody(contentType: ContentType, data: ByteString)
 
 object HttpResponseBody {
-  implicit private[coast] def toResponseEntity(httpResponseBody: HttpResponseBody): ResponseEntity = {
+  implicit private[hulk] def toResponseEntity(httpResponseBody: HttpResponseBody): ResponseEntity = {
     Strict(httpResponseBody.contentType, httpResponseBody.data)
   }
 }

@@ -1,4 +1,4 @@
-package coast.http.request
+package hulk.http.request
 
 import java.io.IOException
 
@@ -52,7 +52,7 @@ case class HttpRequestBody(private val requestEntity: RequestEntity)(implicit ac
 }
 
 object HttpRequestBody {
-  implicit private[coast] def fromRequestEntity(requestEntity: RequestEntity)(implicit actorMaterializer: ActorMaterializer): HttpRequestBody = {
+  implicit private[hulk] def fromRequestEntity(requestEntity: RequestEntity)(implicit actorMaterializer: ActorMaterializer): HttpRequestBody = {
     HttpRequestBody(requestEntity)(actorMaterializer)
   }
 }

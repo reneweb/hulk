@@ -1,15 +1,14 @@
-package coast
+package hulk
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpMethod, HttpRequest, HttpResponse}
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Flow
-import coast.config.{AcceptHeaderVersioning, AcceptVersionHeaderVersioning, CoastConfig, PathVersioning}
-import coast.http.CoastHttpResponse._
-import coast.http.request.HttpRequestBody._
-import coast.http.{Action, CoastHttpRequest, CoastHttpResponse, NotFound}
-import coast.routing.{Filter, Filters, Router}
+import hulk.config.{AcceptHeaderVersioning, AcceptVersionHeaderVersioning, HulkConfig, PathVersioning}
+import hulk.http.request.HttpRequestBody._
+import hulk.http.{Action, HulkHttpRequest, HulkHttpResponse, NotFound}
+import hulk.routing.{Filter, Filters, Router}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -18,13 +17,13 @@ import scala.util.Try
 /**
   * Created by reweber on 18/12/2015
   */
-class CoastHttpServer(router: Router, coastConfig: Option[CoastConfig])
-                     (implicit actorSystem: ActorSystem, actorMaterializer: ActorMaterializer) {
+class HulkHttpServer(router: Router, hulkConfig: Option[HulkConfig])
+                    (implicit actorSystem: ActorSystem, actorMaterializer: ActorMaterializer) {
 
-  val interface = coastConfig.flatMap(_.interface).getOrElse("localhost")
-  val port = coastConfig.flatMap(_.port).getOrElse(10000)
-  val serverSettingsOpt = coastConfig.flatMap(_.serverSettings)
-  val parallelism = coastConfig.flatMap(_.asyncParallelism).getOrElse(5)
+  val interface = hulkConfig.flatMap(_.interface).getOrElse("localhost")
+  val port = hulkConfig.flatMap(_.port).getOrElse(10000)
+  val serverSettingsOpt = hulkConfig.flatMap(_.serverSettings)
+  val parallelism = hulkConfig.flatMap(_.asyncParallelism).getOrElse(5)
 
   def run() = {
     router match {
@@ -54,15 +53,15 @@ class CoastHttpServer(router: Router, coastConfig: Option[CoastConfig])
         val matchedRoute = matchRequestToRoute(routesWithRegex, preparedRequest)
         val pathVarMap = extractPathVariables(matchedRoute, request)
 
-        val coastHttpRequest = CoastHttpRequest(request.method, request.uri.path.toString(), request.headers, request.entity)(pathVarMap,
+        val hulkHttpRequest = HulkHttpRequest(request.method, request.uri.path.toString(), request.headers, request.entity)(pathVarMap,
           request.uri.query(), request.uri.fragment)(request.cookies)
 
-        val outgoingFilterResults = executeOutgoingFilters(filtersSeq, coastHttpRequest)
+        val outgoingFilterResults = executeOutgoingFilters(filtersSeq, hulkHttpRequest)
         val incomingFilterResultOpt = findIncomingFilter(filtersSeq, outgoingFilterResults.size)
 
-        val runIncomingFilterWithRequest = runIncomingFilter(coastHttpRequest) _
+        val runIncomingFilterWithRequest = runIncomingFilter(hulkHttpRequest) _
         val response = incomingFilterResultOpt.map(runIncomingFilterWithRequest)
-          .getOrElse(runActionIfMatch(versionOpt, matchedRoute, coastHttpRequest))
+          .getOrElse(runActionIfMatch(versionOpt, matchedRoute, hulkHttpRequest))
 
         outgoingFilterResults
           .foldLeft(response){ case (resp, filterResult) => resp.flatMap(filterResult) }
@@ -76,22 +75,22 @@ class CoastHttpServer(router: Router, coastConfig: Option[CoastConfig])
     }
   }
 
-  def runActionIfMatch(versionOpt: Option[String], matchedRoute: Option[(RouteDefWithRegex, Action)], coastHttpRequest: CoastHttpRequest): Future[CoastHttpResponse] = {
+  def runActionIfMatch(versionOpt: Option[String], matchedRoute: Option[(RouteDefWithRegex, Action)], httpRequest: HulkHttpRequest): Future[HulkHttpResponse] = {
     matchedRoute.map { routeWithAction =>
-      runAction(versionOpt, coastHttpRequest, routeWithAction)
-    }.getOrElse(Action { req => NotFound() }.run(coastHttpRequest).get)
+      runAction(versionOpt, httpRequest, routeWithAction)
+    }.getOrElse(Action { req => NotFound() }.run(httpRequest).get)
   }
 
-  def runAction(versionOpt: Option[String], coastHttpRequest: CoastHttpRequest, routeWithAction: (RouteDefWithRegex, Action)): Future[CoastHttpResponse] = {
+  def runAction(versionOpt: Option[String], httpRequest: HulkHttpRequest, routeWithAction: (RouteDefWithRegex, Action)): Future[HulkHttpResponse] = {
     versionOpt.map { version =>
-      routeWithAction._2.run(version, coastHttpRequest).getOrElse(Future(NotFound()))
+      routeWithAction._2.run(version, httpRequest).getOrElse(Future(NotFound()))
     }.getOrElse {
-      routeWithAction._2.run(coastHttpRequest).getOrElse(Future(NotFound()))
+      routeWithAction._2.run(httpRequest).getOrElse(Future(NotFound()))
     }
   }
 
   def removeVersionFromRequestIfPathVersioned(request: HttpRequest, versionOpt: Option[String]): HttpRequest = {
-    coastConfig.flatMap { config =>
+    hulkConfig.flatMap { config =>
       config.versioning.map { c => c match {
         case p: PathVersioning => request.copy(uri = request.uri.copy(path = request.uri.path.dropChars(versionOpt.get.length + 1)))
         case _ => request
@@ -100,7 +99,7 @@ class CoastHttpServer(router: Router, coastConfig: Option[CoastConfig])
   }
 
   def findVersion(request: HttpRequest): Option[String] = {
-    coastConfig.flatMap { config =>
+    hulkConfig.flatMap { config =>
       config.versioning.flatMap { c => c match {
         case p: PathVersioning => Some(request.uri.path.toString().drop(1).takeWhile(_ != '/'))
         case a: AcceptHeaderVersioning => request.headers.find(_.name() == "Accept").flatMap(h => a.versionRegex.r.findFirstIn(h.value()))
@@ -139,38 +138,38 @@ class CoastHttpServer(router: Router, coastConfig: Option[CoastConfig])
   private def findIncomingFilter(filtersSeq: Seq[Filter], outgoingFilterResultsSize: Int): Option[Filter] =
     filtersSeq.lift(outgoingFilterResultsSize)
 
-  private def runIncomingFilter(coastHttpRequest: CoastHttpRequest)(filter: Filter) = {
-    filter.filter(r => Future(r))(coastHttpRequest).result.swap.toOption.get
+  private def runIncomingFilter(httpRequest: HulkHttpRequest)(filter: Filter) = {
+    filter.filter(r => Future(r))(httpRequest).result.swap.toOption.get
   }
 
-  private def executeOutgoingFilters(filters: Seq[Filter], coastHttpRequest: CoastHttpRequest) = {
-    def rec(filters: Seq[Filter], coastRequest: CoastHttpRequest): Seq[CoastHttpResponse => Future[CoastHttpResponse]] =
+  private def executeOutgoingFilters(filters: Seq[Filter], httpRequest: HulkHttpRequest) = {
+    def rec(filters: Seq[Filter], httpRequest: HulkHttpRequest): Seq[HulkHttpResponse => Future[HulkHttpResponse]] =
       filters.headOption.map(f => {
-        val filterResult = f.filter(r => Future(r))(coastRequest)
+        val filterResult = f.filter(r => Future(r))(httpRequest)
 
         if(filterResult.result.isRight) {
-          val returnSeq = rec(filters.tail, coastRequest)
+          val returnSeq = rec(filters.tail, httpRequest)
           returnSeq :+ filterResult.result.toOption.get
         } else {
           Seq.empty
         }
       }).getOrElse(Seq.empty)
 
-    rec(filters, coastHttpRequest).reverse
+    rec(filters, httpRequest).reverse
   }
 }
 
-object CoastHttpServer {
+object HulkHttpServer {
 
-  def apply(router: Router, coastConfig: Option[CoastConfig], actorSystem: ActorSystem, actorMaterializer: ActorMaterializer) = {
-    new CoastHttpServer(router, coastConfig)(actorSystem, actorMaterializer)
+  def apply(router: Router, hulkConfig: Option[HulkConfig], actorSystem: ActorSystem, actorMaterializer: ActorMaterializer) = {
+    new HulkHttpServer(router, hulkConfig)(actorSystem, actorMaterializer)
   }
 
-  def apply(router: Router, coastConfig: Option[CoastConfig] = None) = {
+  def apply(router: Router, hulkConfig: Option[HulkConfig] = None) = {
     implicit val actorSystem = ActorSystem()
     implicit val actorMaterializer = ActorMaterializer()(actorSystem)
 
-    new CoastHttpServer(router, coastConfig)
+    new HulkHttpServer(router, hulkConfig)
   }
 }
 

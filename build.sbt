@@ -2,7 +2,7 @@ import sbt._
 import sbt.Keys._
 
 lazy val commonSettings = Seq(
-  name := "coast",
+  name := "hulk",
   version := "0.1.0",
   scalaVersion := "2.11.7",
   crossScalaVersions := Seq("2.10.6", "2.11.7")

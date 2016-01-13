@@ -1,4 +1,4 @@
-package coast.http.response
+package hulk.http.response
 
 /**
   * Created by reweber on 25/12/2015

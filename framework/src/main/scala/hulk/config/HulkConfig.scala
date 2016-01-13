@@ -1,11 +1,11 @@
-package coast.config
+package hulk.config
 
 import akka.http.ServerSettings
 
 /**
   * Created by reweber on 19/12/2015
   */
-trait CoastConfig {
+trait HulkConfig {
   def versioning: Option[Versioning] = None
 
   def interface: Option[String] = None
@@ -16,9 +16,9 @@ trait CoastConfig {
 
 trait Versioning
 
-private[coast] case class PathVersioning() extends Versioning
-private[coast] case class AcceptHeaderVersioning(versionRegex: String = "v[0-9]+") extends Versioning
-private[coast] case class AcceptVersionHeaderVersioning() extends Versioning
+private[hulk] case class PathVersioning() extends Versioning
+private[hulk] case class AcceptHeaderVersioning(versionRegex: String = "v[0-9]+") extends Versioning
+private[hulk] case class AcceptVersionHeaderVersioning() extends Versioning
 
 object Versioning {
   def path = new PathVersioning()
