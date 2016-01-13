@@ -1,10 +1,10 @@
-package coast.versioning
+package hulk.versioning
 
 import akka.http.scaladsl.model.HttpMethods
-import coast.CoastHttpServer
-import coast.config.{Versioning, CoastConfig}
-import coast.http._
-import coast.routing.{RouteDef, Router}
+import hulk.HulkHttpServer
+import hulk.config.{Versioning, HulkConfig}
+import hulk.http._
+import hulk.routing.{RouteDef, Router}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -14,11 +14,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object Application extends App {
 
   val router = new SimpleRouter()
-  val config = new CoastConfig {
+  val config = new HulkConfig {
     override def versioning: Option[Versioning] = Some(Versioning.path)
   }
 
-  CoastHttpServer(router, Some(config)).run()
+  HulkHttpServer(router, Some(config)).run()
 }
 
 class SimpleRouter() extends Router {

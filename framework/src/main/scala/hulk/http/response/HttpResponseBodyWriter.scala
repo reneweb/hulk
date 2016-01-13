@@ -1,4 +1,4 @@
-package coast.http.response
+package hulk.http.response
 
 import akka.http.scaladsl.model.ContentTypes
 import akka.util.ByteString
