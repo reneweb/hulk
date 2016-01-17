@@ -10,6 +10,7 @@ import hulk.filtering.GlobalRateLimiting
 import hulk.http._
 import hulk.http.request.HttpRequestBody._
 import hulk.routing.{Filter, Filters, Router}
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -21,16 +22,31 @@ import scala.util.Try
 class HulkHttpServer(router: Router, hulkConfig: Option[HulkConfig])
                     (implicit actorSystem: ActorSystem, actorMaterializer: ActorMaterializer) {
 
-  val interface = hulkConfig.flatMap(_.interface).getOrElse("localhost")
-  val port = hulkConfig.flatMap(_.port).getOrElse(10000)
-  val serverSettingsOpt = hulkConfig.flatMap(_.serverSettings)
-  val parallelism = hulkConfig.flatMap(_.asyncParallelism).getOrElse(5)
+  private val logger = LoggerFactory.getLogger(classOf[HulkHttpServer])
+
+  private val interface = hulkConfig.flatMap(_.interface).getOrElse("localhost")
+  private val port = hulkConfig.flatMap(_.port).getOrElse(10000)
+  private val serverSettingsOpt = hulkConfig.flatMap(_.serverSettings)
+  private val parallelism = hulkConfig.flatMap(_.asyncParallelism).getOrElse(5)
 
   def run() = {
-    router match {
-      case routerWithFilters: Filters => buildHttpServer(router, routerWithFilters)
-      case _ => buildHttpServer(router, new Filters { def filters = {Seq()} })
+    val server =
+      router match {
+        case routerWithFilters: Filters => buildHttpServer(router, routerWithFilters)
+        case _ => buildHttpServer(router, new Filters { def filters = {Seq()} })
+      }
+
+    server.foreach {server =>
+      logger.info("""    __  ____  ____    __ __""")
+      logger.info("""   / / / / / / / /   / //_/""")
+      logger.info("""  / /_/ / / / / /   / ,<   """)
+      logger.info(""" / __  / /_/ / /___/ /| |  """)
+      logger.info("""/_/ /_/\____/_____/_/ |_|  """)
+      logger.info("")
+      logger.info(s"Host: ${server.localAddress.getHostName} - Port: ${server.localAddress.getPort}")
     }
+
+    server
   }
 
   private def buildHttpServer(router: Router, filters: Filters) = {
