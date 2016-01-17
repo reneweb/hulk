@@ -2,15 +2,13 @@ package hulk.ratelimiter
 
 import akka.http.scaladsl.model.HttpMethods
 import hulk.HulkHttpServer
-import hulk.config.{Versioning, HulkConfig}
 import hulk.filtering._
-import hulk.http.{Ok, Action}
+import hulk.http.{Action, Ok, _}
 import hulk.routing.{RouteDef, Router}
-import hulk.http._
-import scala.concurrent.Future
-import scala.concurrent.duration._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.concurrent.duration._
 
 /**
   * Created by reweber on 16/01/2016
