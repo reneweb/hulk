@@ -6,8 +6,9 @@ import akka.http.scaladsl.model.{HttpMethod, HttpRequest, HttpResponse}
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Flow
 import hulk.config.{AcceptHeaderVersioning, AcceptVersionHeaderVersioning, HulkConfig, PathVersioning}
+import hulk.filtering.{GlobalRateLimiting, RateLimiter}
 import hulk.http.request.HttpRequestBody._
-import hulk.http.{Action, HulkHttpRequest, HulkHttpResponse, NotFound}
+import hulk.http._
 import hulk.routing.{Filter, Filters, Router}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -46,26 +47,36 @@ class HulkHttpServer(router: Router, hulkConfig: Option[HulkConfig])
 
     val flow: Flow[HttpRequest, HttpResponse, Any] = Flow[HttpRequest]
       .mapAsync(parallelism) { implicit request =>
+        def doFilteringAndRouting(): Future[HttpResponse] = {
+          val versionOpt: Option[String] = findVersion(request)
+          val preparedRequest = removeVersionFromRequestIfPathVersioned(request, versionOpt)
 
-        val versionOpt: Option[String] = findVersion(request)
-        val preparedRequest = removeVersionFromRequestIfPathVersioned(request, versionOpt)
+          val matchedRoute = matchRequestToRoute(routesWithRegex, preparedRequest)
+          val pathVarMap = extractPathVariables(matchedRoute, request)
 
-        val matchedRoute = matchRequestToRoute(routesWithRegex, preparedRequest)
-        val pathVarMap = extractPathVariables(matchedRoute, request)
+          val hulkHttpRequest = HulkHttpRequest(request.method, request.uri.path.toString(), request.headers, request.entity)(pathVarMap,
+            request.uri.query(), request.uri.fragment)(request.cookies)
 
-        val hulkHttpRequest = HulkHttpRequest(request.method, request.uri.path.toString(), request.headers, request.entity)(pathVarMap,
-          request.uri.query(), request.uri.fragment)(request.cookies)
+          val outgoingFilterResults = executeOutgoingFilters(filtersSeq, hulkHttpRequest)
+          val incomingFilterResultOpt = findIncomingFilter(filtersSeq, outgoingFilterResults.size)
 
-        val outgoingFilterResults = executeOutgoingFilters(filtersSeq, hulkHttpRequest)
-        val incomingFilterResultOpt = findIncomingFilter(filtersSeq, outgoingFilterResults.size)
+          val runIncomingFilterWithRequest = runIncomingFilter(hulkHttpRequest) _
+          val response = incomingFilterResultOpt.map(runIncomingFilterWithRequest)
+            .getOrElse(runActionIfMatch(versionOpt, matchedRoute, hulkHttpRequest))
 
-        val runIncomingFilterWithRequest = runIncomingFilter(hulkHttpRequest) _
-        val response = incomingFilterResultOpt.map(runIncomingFilterWithRequest)
-          .getOrElse(runActionIfMatch(versionOpt, matchedRoute, hulkHttpRequest))
+          outgoingFilterResults
+            .foldLeft(response) { case (resp, filterResult) => resp.flatMap(filterResult) }
+            .map(toAkkaHttpResponse => toAkkaHttpResponse)
+        }
 
-        outgoingFilterResults
-          .foldLeft(response){ case (resp, filterResult) => resp.flatMap(filterResult) }
-          .map(toAkkaHttpResponse => toAkkaHttpResponse)
+        router match {
+          case rateLimiting: GlobalRateLimiting =>
+            rateLimiting.rateLimiter.limitExceeded(request.headers, request.cookies).flatMap { limitExceeded =>
+              if(limitExceeded) Future(ServiceUnavailable()) else doFilteringAndRouting()
+            }
+          case _ => doFilteringAndRouting()
+        }
+
       }
 
     serverSettingsOpt.map { serverSettings =>
