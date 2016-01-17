@@ -6,9 +6,9 @@ import akka.http.scaladsl.model.{HttpMethod, HttpRequest, HttpResponse}
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Flow
 import hulk.config.{AcceptHeaderVersioning, AcceptVersionHeaderVersioning, HulkConfig, PathVersioning}
-import hulk.filtering.{GlobalRateLimiting, RateLimiter}
-import hulk.http.request.HttpRequestBody._
+import hulk.filtering.GlobalRateLimiting
 import hulk.http._
+import hulk.http.request.HttpRequestBody._
 import hulk.routing.{Filter, Filters, Router}
 
 import scala.concurrent.ExecutionContext.Implicits.global
