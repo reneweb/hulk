@@ -1,13 +1,13 @@
 package hulk.filtering
 
 import akka.http.scaladsl.model.HttpHeader
-import akka.http.scaladsl.model.headers.{HttpCookiePair, HttpCookie}
+import akka.http.scaladsl.model.headers.HttpCookiePair
 import hulk.http.{HulkHttpRequest, HulkHttpResponse, ServiceUnavailable}
 import net.sf.ehcache.{CacheManager, Element}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Created by reweber on 13/01/2016

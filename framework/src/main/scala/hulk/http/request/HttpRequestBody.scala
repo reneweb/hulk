@@ -1,13 +1,9 @@
 package hulk.http.request
 
-import java.io.IOException
-
 import akka.http.scaladsl.model.RequestEntity
 import akka.stream.ActorMaterializer
 import akka.stream.javadsl.Source
 import akka.util.ByteString
-import cats.data.Xor
-import com.fasterxml.jackson.core.JsonParseException
 import play.api.libs.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global

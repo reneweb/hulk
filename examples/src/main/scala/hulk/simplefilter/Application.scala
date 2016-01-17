@@ -1,6 +1,6 @@
 package hulk.simplefilter
 
-import akka.http.scaladsl.model.{HttpMethod, HttpMethods, Uri}
+import akka.http.scaladsl.model.HttpMethods
 import hulk.HulkHttpServer
 import hulk.http._
 import hulk.routing.Filter._

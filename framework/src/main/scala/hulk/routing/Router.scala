@@ -1,6 +1,5 @@
 package hulk.routing
 
-import akka.http.scaladsl.model.{HttpMethod, Uri}
 import hulk.http.Action
 
 /**
