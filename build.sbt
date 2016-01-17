@@ -16,6 +16,8 @@ lazy val framework = project
   .settings(moduleName := "framework")
   .settings(libraryDependencies ++= Seq (
     "com.typesafe.akka" % "akka-http-experimental_2.11" % "2.0.2",
+    "org.slf4j" % "slf4j-api" % "1.7.13",
+    "ch.qos.logback" % "logback-classic" % "1.1.3",
     "net.sf.ehcache" % "ehcache" % "2.10.1",
 
     "org.spire-math" % "cats-core_2.11" % "0.3.0",
