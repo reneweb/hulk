@@ -5,7 +5,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpMethod, HttpRequest, HttpResponse}
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Flow
-import com.codahale.metrics.MetricRegistry
+import com.codahale.metrics.{Metric, MetricRegistry}
 import hulk.config.{AcceptHeaderVersioning, AcceptVersionHeaderVersioning, HulkConfig, PathVersioning}
 import hulk.filtering.GlobalRateLimiting
 import hulk.http._
@@ -13,6 +13,7 @@ import hulk.http.request.HttpRequestBody._
 import hulk.routing.{Filter, Filters, Router}
 import org.slf4j.LoggerFactory
 
+import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Try
@@ -88,14 +89,25 @@ class HulkHttpServer(router: Router, hulkConfig: Option[HulkConfig])
             .map(toAkkaHttpResponse => toAkkaHttpResponse)
         }
 
-        router match {
-          case rateLimiting: GlobalRateLimiting =>
-            rateLimiting.rateLimiter.limitExceeded(request.headers, request.cookies).flatMap { limitExceeded =>
-              if(limitExceeded) Future(ServiceUnavailable()) else doFilteringAndRouting()
-            }
-          case _ => doFilteringAndRouting()
-        }
+        val timerRequestsByMethodAndUri = metricRegistry.timer(s"hulk.request.method.${request.method.name}.uri.${request.uri.toString()}")
+        val timerRequests = metricRegistry.timer(s"hulk.request")
 
+        val responseFuture: Future[HttpResponse] =
+          router match {
+            case rateLimiting: GlobalRateLimiting =>
+              rateLimiting.rateLimiter.limitExceeded(request.headers, request.cookies).flatMap { limitExceeded =>
+                if(limitExceeded) Future(ServiceUnavailable()) else doFilteringAndRouting()
+              }
+            case _ => doFilteringAndRouting()
+          }
+
+        responseFuture.onComplete { c =>
+          timerRequestsByMethodAndUri.time()
+          timerRequests.time()
+        }
+        responseFuture.foreach(r => metricRegistry.counter(s"hulk.response.status.${r.status.intValue()}"))
+
+        responseFuture
       }
 
     serverSettingsOpt.map { serverSettings =>
