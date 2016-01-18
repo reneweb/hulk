@@ -1,6 +1,7 @@
 package hulk.config
 
 import akka.http.ServerSettings
+import com.codahale.metrics.MetricRegistry
 
 /**
   * Created by reweber on 19/12/2015
@@ -12,6 +13,8 @@ trait HulkConfig {
   def port: Option[Int] = None
   def asyncParallelism: Option[Int] = None
   def serverSettings: Option[ServerSettings] = None
+
+  def metricRegistry: Option[MetricRegistry] = None
 }
 
 trait Versioning

@@ -5,6 +5,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpMethod, HttpRequest, HttpResponse}
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Flow
+import com.codahale.metrics.MetricRegistry
 import hulk.config.{AcceptHeaderVersioning, AcceptVersionHeaderVersioning, HulkConfig, PathVersioning}
 import hulk.filtering.GlobalRateLimiting
 import hulk.http._
@@ -28,6 +29,8 @@ class HulkHttpServer(router: Router, hulkConfig: Option[HulkConfig])
   private val port = hulkConfig.flatMap(_.port).getOrElse(10000)
   private val serverSettingsOpt = hulkConfig.flatMap(_.serverSettings)
   private val parallelism = hulkConfig.flatMap(_.asyncParallelism).getOrElse(5)
+
+  private val metricRegistry = hulkConfig.flatMap(_.metricRegistry).getOrElse(new MetricRegistry)
 
   def run() = {
     val server =
