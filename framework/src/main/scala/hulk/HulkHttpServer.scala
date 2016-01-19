@@ -91,7 +91,7 @@ class HulkHttpServer(router: Router, hulkConfig: Option[HulkConfig])
 
         val timerRequestsByMethodAndUri = metricRegistry.timer(s"hulk.request.method.${request.method.name}.uri.${request.uri.toString()}").time()
         val timerRequests = metricRegistry.timer(s"hulk.request").time()
-        metricRegistry.counter(s"hulk.request.useragent.${request.headers.find(_.is("user-agent")).getOrElse("unknown")}").inc()
+        metricRegistry.meter(s"hulk.request.useragent.${request.headers.find(_.is("user-agent")).getOrElse("unknown")}").mark()
 
         val responseFuture: Future[HttpResponse] =
           router match {
@@ -106,7 +106,7 @@ class HulkHttpServer(router: Router, hulkConfig: Option[HulkConfig])
           timerRequestsByMethodAndUri.stop()
           timerRequests.stop()
         }
-        responseFuture.foreach(r => metricRegistry.counter(s"hulk.response.status.${r.status.intValue()}"))
+        responseFuture.foreach(r => metricRegistry.meter(s"hulk.response.status.${r.status.intValue()}").mark())
 
         responseFuture
       }
