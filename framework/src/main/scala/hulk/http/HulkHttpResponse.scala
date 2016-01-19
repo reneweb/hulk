@@ -163,6 +163,18 @@ object ExpectationFailed {
   def apply[A <: ResponseFormat](bodyWriter: HttpResponseBodyWriter[A] = new EmptyHttpResponseWriter(), httpHeader: Seq[HttpHeader] = Seq()): HulkHttpResponse = Response(417, bodyWriter(), httpHeader)
 }
 
+object PreconditionFailed {
+  def apply[A <: ResponseFormat](bodyWriter: HttpResponseBodyWriter[A] = new EmptyHttpResponseWriter(), httpHeader: Seq[HttpHeader] = Seq()): HulkHttpResponse = Response(428, bodyWriter(), httpHeader)
+}
+
+object TooManyRequests {
+  def apply[A <: ResponseFormat](bodyWriter: HttpResponseBodyWriter[A] = new EmptyHttpResponseWriter(), httpHeader: Seq[HttpHeader] = Seq()): HulkHttpResponse = Response(429, bodyWriter(), httpHeader)
+}
+
+object RequestHeaderFieldsTooLarge {
+  def apply[A <: ResponseFormat](bodyWriter: HttpResponseBodyWriter[A] = new EmptyHttpResponseWriter(), httpHeader: Seq[HttpHeader] = Seq()): HulkHttpResponse = Response(431, bodyWriter(), httpHeader)
+}
+
 
 
 object InternalServerError {
@@ -187,4 +199,8 @@ object GatewayTimeout {
 
 object HttpVersionNotSupported {
   def apply[A <: ResponseFormat](bodyWriter: HttpResponseBodyWriter[A] = new EmptyHttpResponseWriter(), httpHeader: Seq[HttpHeader] = Seq()): HulkHttpResponse = Response(505, bodyWriter(), httpHeader)
+}
+
+object NetworkAuthenticationRequired {
+  def apply[A <: ResponseFormat](bodyWriter: HttpResponseBodyWriter[A] = new EmptyHttpResponseWriter(), httpHeader: Seq[HttpHeader] = Seq()): HulkHttpResponse = Response(511, bodyWriter(), httpHeader)
 }
