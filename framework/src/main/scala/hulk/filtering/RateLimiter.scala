@@ -2,7 +2,7 @@ package hulk.filtering
 
 import akka.http.scaladsl.model.HttpHeader
 import akka.http.scaladsl.model.headers.HttpCookiePair
-import hulk.http.{HulkHttpRequest, HulkHttpResponse, ServiceUnavailable}
+import hulk.http.{HulkHttpRequest, HulkHttpResponse, TooManyRequests}
 import net.sf.ehcache.{CacheManager, Element}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -37,7 +37,7 @@ class AsyncRateLimiter(rateLimitBy: RateLimitBy, nrRequest: Int, withinTimeRange
 
   def apply(f: HulkHttpRequest => Future[HulkHttpResponse]): HulkHttpRequest => Future[HulkHttpResponse] = {
     case request => limitExceeded(request.httpHeader, request.cookies).flatMap { limitExceeded =>
-      if(limitExceeded) Future(ServiceUnavailable()) else f(request)
+      if(limitExceeded) Future(TooManyRequests()) else f(request)
     }
   }
 
