@@ -5,7 +5,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpMethod, HttpRequest, HttpResponse}
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Flow
-import com.codahale.metrics.{Metric, MetricRegistry}
+import com.codahale.metrics.MetricRegistry
 import hulk.config.{AcceptHeaderVersioning, AcceptVersionHeaderVersioning, HulkConfig, PathVersioning}
 import hulk.filtering.GlobalRateLimiting
 import hulk.http._
@@ -13,7 +13,6 @@ import hulk.http.request.HttpRequestBody._
 import hulk.routing.{Filter, Filters, Router}
 import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Try
@@ -97,7 +96,7 @@ class HulkHttpServer(router: Router, hulkConfig: Option[HulkConfig])
           router match {
             case rateLimiting: GlobalRateLimiting =>
               rateLimiting.rateLimiter.limitExceeded(request.headers, request.cookies).flatMap { limitExceeded =>
-                if(limitExceeded) Future(ServiceUnavailable()) else doFilteringAndRouting()
+                if(limitExceeded) Future(TooManyRequests()) else doFilteringAndRouting()
               }
             case _ => doFilteringAndRouting()
           }
