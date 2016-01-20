@@ -2,7 +2,7 @@ package hulk.http.response
 
 import akka.http.scaladsl.model.ContentTypes
 import akka.util.ByteString
-import play.api.libs.json.{Json, JsValue}
+import play.api.libs.json.{Json => PJson, JsValue}
 
 import scala.xml.Elem
 
@@ -17,7 +17,7 @@ object HttpResponseBodyWriter {
   implicit def jsonToHttpResponseBodyWriter(json: JsValue): HttpResponseBodyWriter[Json] = {
     new HttpResponseBodyWriter[Json] {
       override def apply(): HttpResponseBody = {
-        HttpResponseBody(ContentTypes.`application/json`, ByteString(Json.stringify(json)))
+        HttpResponseBody(ContentTypes.`application/json`, ByteString(PJson.stringify(json)))
       }
     }
   }
