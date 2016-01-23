@@ -1,7 +1,10 @@
 package hulk.http.response
 
+import java.io.{StringWriter, StringReader}
+
 import akka.http.scaladsl.model.ContentTypes
 import akka.util.ByteString
+import com.github.mustachejava.DefaultMustacheFactory
 import play.api.libs.json.{Json => PJson, JsValue}
 
 import scala.xml.Elem
@@ -42,6 +45,21 @@ object HttpResponseBodyWriter {
     new HttpResponseBodyWriter[Html] {
       override def apply(): HttpResponseBody = {
         HttpResponseBody(ContentTypes.`text/html(UTF-8)`, ByteString(text))
+      }
+    }
+  }
+
+  implicit def mustacheAsHtmlToHttpResponseBodyWriter(template: MustacheTemplate): HttpResponseBodyWriter[Html] = {
+    new HttpResponseBodyWriter[Html] {
+      override def apply(): HttpResponseBody = {
+        val writer = new StringWriter()
+        val mf = new DefaultMustacheFactory()
+        val mustache = mf.compile(new StringReader(template.template), "response")
+
+        mustache.execute(writer, template.data)
+        writer.close()
+
+        HttpResponseBody(ContentTypes.`text/html(UTF-8)`, ByteString(writer.getBuffer.toString))
       }
     }
   }
