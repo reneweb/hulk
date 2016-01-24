@@ -3,7 +3,8 @@ package hulk.simple
 import akka.http.scaladsl.model.HttpMethods
 import hulk.HulkHttpServer
 import hulk.http._
-import hulk.routing.{RouteDef, Router}
+import hulk.http.response.Text
+import hulk.routing.{*, RouteDef, Router}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -18,11 +19,12 @@ object Application extends App {
 
 class SimpleRouter() extends Router {
   val simpleController = new SimpleController()
-  val notFoundController = new NotFoundController()
 
   override def router: Map[RouteDef, Action] = Map(
     (HttpMethods.GET, "/test") -> simpleController.testGet,
-    (HttpMethods.POST, "/test") -> simpleController.testPost
+    (HttpMethods.POST, "/test") -> simpleController.testPost,
+    (*, "/test/:{testParam}/other") -> simpleController.testParam,
+    (*, "/test/:{testParamWithRegex: .*}") -> simpleController.testParam
   )
 }
 
@@ -32,14 +34,13 @@ class SimpleController() {
   }
 
   def testPost = AsyncAction { request =>
+    println(request.requestParams.mkString(";"))
     request.body.asJson().map{ jsonOpt =>
       jsonOpt.map(Ok(_)).getOrElse(BadRequest())
     }
   }
-}
 
-class NotFoundController() {
-  def testNotFound = Action { request =>
-    NotFound()
+  def testParam = Action { request =>
+    Ok[Text](request.requestParams.mkString(", "))
   }
 }
