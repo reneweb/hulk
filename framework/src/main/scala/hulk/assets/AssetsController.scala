@@ -18,9 +18,9 @@ class AssetsController {
     assetOpt.flatMap { asset =>
       val sourceOpt =
         if(asset.startsWith("hulk")) {
-          Try(Source.fromURL(getClass.getResource(Paths.get("/" + asset).toString))).toOption
+          Try(Source.fromURL(getClass.getResource(Paths.get("/", asset).toString))).toOption
         } else {
-          Try(path.map(p => Source.fromFile(Paths.get(p + asset).toString))).toOption.flatten
+          Try(path.map(p => Source.fromFile(Paths.get(p, asset).toString))).toOption.flatten
         }
 
       sourceOpt.map { source =>
