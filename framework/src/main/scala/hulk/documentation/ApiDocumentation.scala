@@ -72,13 +72,13 @@ object SwaggerResourceEndpoint {
         }
 
       Json.obj(swaggerResourceEndpoint.path ->
-        Json.obj(swaggerResourceEndpoint.method.name.toLowerCase ->
+        Json.obj(swaggerResourceEndpoint.method.name.toLowerCase -> {
           Json.obj(
             "parameters" -> swaggerResourceEndpoint.params.map(ParameterDocumentationWrites.writes),
             "responses" -> responseDocJson
-          )
-        )
-      ) ++ swaggerResourceEndpoint.extendedData.getOrElse(Json.obj())
+          ) ++ swaggerResourceEndpoint.extendedData.getOrElse(Json.obj())
+        })
+      )
     }
   }
 }
