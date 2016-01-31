@@ -1,13 +1,14 @@
-package hulk.documentation
+package hulk.documentation.swagger
 
-import hulk.documentation.SwaggerBase.SwaggerBaseWrites
-import hulk.documentation.SwaggerResourceEndpoint.SwaggerResourceEndpointWrites
+import hulk.documentation.ApiDocumentation
+import hulk.documentation.swagger.SwaggerBaseDocumentation.SwaggerBaseWrites
+import hulk.documentation.swagger.SwaggerRouteDocumentation.SwaggerResourceEndpointWrites
 import play.api.libs.json.{JsObject, JsValue, Json}
 
 /**
   * Created by reweber on 29/01/2016
   */
-class Swagger(swaggerBase: ApiDocumentation with SwaggerBase, endpoints: Seq[ApiDocumentation with SwaggerResourceEndpoint]) {
+class Swagger(swaggerBase: ApiDocumentation with SwaggerBaseDocumentation, endpoints: Seq[ApiDocumentation with SwaggerRouteDocumentation]) {
 
   def asController: SwaggerController = new SwaggerController(asJson)
 

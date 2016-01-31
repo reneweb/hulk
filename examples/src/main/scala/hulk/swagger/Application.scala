@@ -1,12 +1,11 @@
 package hulk.swagger
 
-import akka.http.scaladsl.model.{HttpMethod, Uri, HttpMethods}
+import akka.http.scaladsl.model.{HttpMethod, HttpMethods}
 import hulk.HulkHttpServer
 import hulk.documentation._
-import hulk.http.response.Text
-import hulk.http.{BadRequest, AsyncAction, Ok, Action}
-import hulk.routing.{*, RouteDef, Router}
-import play.api.libs.json.JsObject
+import hulk.documentation.swagger._
+import hulk.http.{Action, AsyncAction, BadRequest, Ok}
+import hulk.routing.{RouteDef, Router}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -30,14 +29,14 @@ class SimpleRouter() extends Router {
   )
 }
 
-class MySwaggerBase extends ApiDocumentation with SwaggerBase {
+class MySwaggerBase extends ApiDocumentation with SwaggerBaseDocumentation {
   override val name: String = getClass.getCanonicalName
   override val description: String = "This is a cool API"
   override val apiVersion: String = "1.0"
   override val consumes: Seq[String] = Seq("application/json")
 }
 
-class MyTestGetEndpointDoc extends ApiDocumentation with SwaggerResourceEndpoint {
+class MyTestGetEndpointDoc extends ApiDocumentation with SwaggerRouteDocumentation {
   override val name: String = "My Get Endpoint"
   override val description: String = "My Get Endpoint"
   override val method: HttpMethod = HttpMethods.GET
@@ -46,7 +45,7 @@ class MyTestGetEndpointDoc extends ApiDocumentation with SwaggerResourceEndpoint
   override val params: Seq[ParameterDocumentation] = Seq()
 }
 
-class MyTestPostEndpointDoc extends ApiDocumentation with SwaggerResourceEndpoint {
+class MyTestPostEndpointDoc extends ApiDocumentation with SwaggerRouteDocumentation {
   override val name: String = "My Post Endpoint"
   override val description: String = "My Post Endpoint"
   override val method: HttpMethod = HttpMethods.POST
