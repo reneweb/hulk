@@ -1,7 +1,7 @@
-package hulk.documentation
+package hulk.documentation.swagger
 
-import hulk.http.{Ok, Action}
-import play.api.libs.json.{JsValue, JsObject}
+import hulk.http.{Action, Ok}
+import play.api.libs.json.JsValue
 
 /**
   * Created by reweber on 29/01/2016
