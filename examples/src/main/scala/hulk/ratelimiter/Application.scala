@@ -2,7 +2,7 @@ package hulk.ratelimiter
 
 import akka.http.scaladsl.model.HttpMethods
 import hulk.HulkHttpServer
-import hulk.filtering._
+import hulk.ratelimiting._
 import hulk.http.{Action, Ok, _}
 import hulk.routing.{RouteDef, Router}
 
