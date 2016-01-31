@@ -2,7 +2,8 @@ package hulk.versioning
 
 import akka.http.scaladsl.model.HttpMethods
 import hulk.HulkHttpServer
-import hulk.config.{Versioning, HulkConfig}
+import hulk.config.versioning.Versioning
+import hulk.config.HulkConfig
 import hulk.http._
 import hulk.routing.{RouteDef, Router}
 
