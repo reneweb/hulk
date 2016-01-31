@@ -6,7 +6,8 @@ import akka.http.scaladsl.model.{HttpMethod, HttpRequest, HttpResponse}
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Flow
 import com.codahale.metrics.MetricRegistry
-import hulk.config.{AcceptHeaderVersioning, AcceptVersionHeaderVersioning, HulkConfig, PathVersioning}
+import hulk.config.HulkConfig
+import hulk.config.versioning.{AcceptVersionHeaderVersioning, AcceptHeaderVersioning, PathVersioning}
 import hulk.ratelimiting.GlobalRateLimiting
 import hulk.http._
 import hulk.http.request.HttpRequestBody._
