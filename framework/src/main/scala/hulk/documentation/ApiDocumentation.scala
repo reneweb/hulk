@@ -51,7 +51,8 @@ object SwaggerBase {
         "swagger" -> swaggerBase.swaggerVersion,
         "info" -> Json.obj(
           "title" -> swaggerBase.name,
-          "description" -> swaggerBase.description
+          "description" -> swaggerBase.description,
+          "version" -> swaggerBase.apiVersion
         ),
         "consumes" -> swaggerBase.consumes,
         "produces" -> swaggerBase.produces,
