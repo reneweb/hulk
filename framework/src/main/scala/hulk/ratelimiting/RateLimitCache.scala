@@ -5,6 +5,8 @@ import net.sf.ehcache.{Element, CacheManager}
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 /**
   * Created by reweber on 31/01/2016
   */
