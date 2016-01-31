@@ -91,18 +91,20 @@ object ParameterDocumentation {
           Json.obj(
             "name" -> q.name,
             "in" -> "query",
-            "description" -> q.description,
-            "type" -> q.dataType,
             "required" -> q.required
-          ) ++ q.extendedData.getOrElse(Json.obj())
+          ) ++
+            q.description.map(d => Json.obj("description" -> d)).getOrElse(Json.obj()) ++
+            q.dataType.map(t => Json.obj("type" -> t)).getOrElse(Json.obj()) ++
+            q.extendedData.getOrElse(Json.obj())
         case p: PathParameterDocumentation =>
           Json.obj(
             "name" -> p.name,
             "in" -> "path",
-            "description" -> p.description,
-            "type" -> p.dataType,
             "required" -> p.required
-          ) ++ p.extendedData.getOrElse(Json.obj())
+          ) ++
+            p.description.map(d => Json.obj("description" -> d)).getOrElse(Json.obj()) ++
+            p.dataType.map(t => Json.obj("type" -> t)).getOrElse(Json.obj()) ++
+            p.extendedData.getOrElse(Json.obj())
       }
     }
   }
@@ -111,12 +113,11 @@ object ParameterDocumentation {
 object ResponseDocumentation {
   implicit object ResponseDocumentationWrites extends Writes[ResponseDocumentation] {
     override def writes(responseDocumentation: ResponseDocumentation): JsValue = {
-      Json.obj(responseDocumentation.statusCode.toString ->
-         Json.obj(
-           "description" -> responseDocumentation.description,
-           "type" -> responseDocumentation.responseType
-         )
-      ) ++ responseDocumentation.extendedData.getOrElse(Json.obj())
+      Json.obj(responseDocumentation.statusCode.toString -> {
+        responseDocumentation.description.map(d => Json.obj("description" -> d)).getOrElse(Json.obj()) ++
+        responseDocumentation.responseType.map(t => Json.obj("type" -> t)).getOrElse(Json.obj()) ++
+        responseDocumentation.extendedData.getOrElse(Json.obj())
+      })
     }
   }
 }
