@@ -47,6 +47,18 @@ case class ResponseDocumentation(statusCode: Int, description: Option[String] = 
 object SwaggerBase {
   implicit object SwaggerBaseWrites extends Writes[ApiDocumentation with SwaggerBase] {
     override def writes(swaggerBase: ApiDocumentation with SwaggerBase): JsValue = {
+      val consumesDocJson = if(swaggerBase.consumes.nonEmpty) {
+        Json.obj("consumes" -> swaggerBase.consumes)
+      } else {
+        Json.obj()
+      }
+
+      val producesDocJson = if(swaggerBase.produces.nonEmpty) {
+        Json.obj("produces" -> swaggerBase.produces)
+      } else {
+        Json.obj()
+      }
+
       Json.obj(
         "swagger" -> swaggerBase.swaggerVersion,
         "info" -> Json.obj(
@@ -54,11 +66,9 @@ object SwaggerBase {
           "description" -> swaggerBase.description,
           "version" -> swaggerBase.apiVersion
         ),
-        "consumes" -> swaggerBase.consumes,
-        "produces" -> swaggerBase.produces,
         "host" -> swaggerBase.host,
         "schemes" -> swaggerBase.schemes
-      ) ++ swaggerBase.extendedData.getOrElse(Json.obj())
+      ) ++ consumesDocJson ++ producesDocJson ++ swaggerBase.extendedData.getOrElse(Json.obj())
     }
   }
 }
@@ -67,16 +77,23 @@ object SwaggerResourceEndpoint {
   implicit object SwaggerResourceEndpointWrites extends Writes[ApiDocumentation with SwaggerResourceEndpoint] {
     override def writes(swaggerResourceEndpoint: ApiDocumentation with SwaggerResourceEndpoint): JsValue = {
       val responseDocJson =
-        swaggerResourceEndpoint.response.foldLeft(Json.obj()) { case (json, responseDoc) =>
-          json ++ ResponseDocumentationWrites.writes(responseDoc).as[JsObject]
+        if(swaggerResourceEndpoint.response.nonEmpty) {
+          Json.obj("responses" -> swaggerResourceEndpoint.response.foldLeft(Json.obj()) { case (json, responseDoc) =>
+            json ++ ResponseDocumentationWrites.writes(responseDoc).as[JsObject]
+          })
+        } else {
+          Json.obj()
         }
+
+      val parameterDocJson = if(swaggerResourceEndpoint.params.nonEmpty) {
+        Json.obj("parameters" -> swaggerResourceEndpoint.params.map(ParameterDocumentationWrites.writes))
+      } else {
+        Json.obj()
+      }
 
       Json.obj(swaggerResourceEndpoint.path ->
         Json.obj(swaggerResourceEndpoint.method.name.toLowerCase -> {
-          Json.obj(
-            "parameters" -> swaggerResourceEndpoint.params.map(ParameterDocumentationWrites.writes),
-            "responses" -> responseDocJson
-          ) ++ swaggerResourceEndpoint.extendedData.getOrElse(Json.obj())
+          parameterDocJson ++ responseDocJson ++ swaggerResourceEndpoint.extendedData.getOrElse(Json.obj())
         })
       )
     }
