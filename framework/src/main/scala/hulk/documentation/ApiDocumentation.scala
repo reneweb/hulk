@@ -71,7 +71,7 @@ object SwaggerResourceEndpoint {
         }
 
       Json.obj(swaggerResourceEndpoint.path ->
-        Json.obj(swaggerResourceEndpoint.method.name ->
+        Json.obj(swaggerResourceEndpoint.method.name.toLowerCase ->
           Json.obj(
             "parameters" -> swaggerResourceEndpoint.params.map(ParameterDocumentationWrites.writes),
             "responses" -> responseDocJson
