@@ -1,9 +1,8 @@
-package hulk.filtering
+package hulk.ratelimiting
 
 import akka.http.scaladsl.model.HttpHeader
 import akka.http.scaladsl.model.headers.HttpCookiePair
 import hulk.http.{HulkHttpRequest, HulkHttpResponse, TooManyRequests}
-import net.sf.ehcache.{CacheManager, Element}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -82,10 +81,6 @@ object AsyncRateLimiter {
     new AsyncRateLimiter(rateLimitBy, nrRequest, withinTimeRange, rateLimitCache)
 }
 
-trait GlobalRateLimiting {
-  def rateLimiter: RateLimiter
-}
-
 trait RateLimitBy
 case class IP() extends RateLimitBy
 case class Cookie(key: String) extends RateLimitBy
@@ -93,30 +88,4 @@ case class Cookie(key: String) extends RateLimitBy
 object RateLimitBy {
   def ip = IP()
   def cookie(key: String) = Cookie(key)
-}
-
-trait RateLimitCache {
-  def putRateLimitValue(key: String, currNrRequest: Int, withinTimeRange: Duration): Future[_]
-  def updateRateLimitValue(key: String, currNrRequest: Int, withinTimeRange: Duration): Future[_]
-  def getRateLimitValue(key: String): Future[Option[String]]
-}
-
-class DefaultEhCache extends RateLimitCache {
-  val cache = CacheManager.getInstance().addCacheIfAbsent("defaultRateLimiter")
-
-  override def putRateLimitValue(key: String, currNrRequest: Int, withinTimeRange: Duration): Future[_] = {
-    val el = new Element(key, currNrRequest)
-    el.setTimeToLive(withinTimeRange.toSeconds.toInt)
-    Future(cache.put(el))
-  }
-
-  override def updateRateLimitValue(key: String, currNrRequest: Int, withinTimeRange: Duration): Future[_] = {
-    val el = new Element(key, currNrRequest)
-    Future(cache.put(el))
-  }
-
-  override def getRateLimitValue(key: String): Future[Option[String]] = {
-    val el = Future(Option(cache.get(key)))
-    el.map(e => e.map(_.getObjectValue.toString))
-  }
 }
