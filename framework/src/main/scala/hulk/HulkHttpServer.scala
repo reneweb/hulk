@@ -111,7 +111,7 @@ class HulkHttpServer(router: Router, hulkConfig: Option[HulkConfig])
         }
         responseFuture.foreach { r =>
           metricRegistry.meter(s"hulk.response.status.${r.status.intValue()}").mark()
-          logger.debug(s"Response: ${r.protocol.value} ${r.status.intValue()} ${r.status.value} - ${r.status.reason()} ")
+          logger.debug(s"Response: ${r.protocol.value} ${r.status.value} ")
         }
 
         responseFuture
