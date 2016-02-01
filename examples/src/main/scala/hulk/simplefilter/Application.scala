@@ -2,8 +2,9 @@ package hulk.simplefilter
 
 import akka.http.scaladsl.model.HttpMethods
 import hulk.HulkHttpServer
+import hulk.filtering.Filter.Next
+import hulk.filtering.{FilterResult, Filter, Filters}
 import hulk.http._
-import hulk.routing.Filter._
 import hulk.routing._
 
 import scala.concurrent.ExecutionContext.Implicits.global

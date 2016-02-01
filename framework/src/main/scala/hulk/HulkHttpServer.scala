@@ -11,7 +11,8 @@ import hulk.config.versioning.{AcceptVersionHeaderVersioning, AcceptHeaderVersio
 import hulk.ratelimiting.GlobalRateLimiting
 import hulk.http._
 import hulk.http.request.HttpRequestBody._
-import hulk.routing.{Filter, Filters, Router}
+import hulk.filtering.{Filter, Filters}
+import hulk.routing.Router
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
