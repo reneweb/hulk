@@ -1,7 +1,7 @@
 package hulk.filtering
 
+import hulk.filtering.Filter.Next
 import hulk.http.{HulkHttpRequest, HulkHttpResponse}
-import hulk.routing.Filter.Next
 
 import scala.concurrent.Future
 
