@@ -19,7 +19,7 @@ class RateLimiter(rateLimitBy: RateLimitBy, nrRequest: Int, withinTimeRange: Dur
 
   def andThen(f: HulkHttpRequest => HulkHttpResponse) = apply(f)
 
-  def limitExceeded(header: Seq[HttpHeader], cookies: Seq[HttpCookiePair]): Future[Boolean] = {
+  private[hulk] def limitExceeded(header: Seq[HttpHeader], cookies: Seq[HttpCookiePair]): Future[Boolean] = {
     AsyncRateLimiter(rateLimitCache)(rateLimitBy, nrRequest, withinTimeRange).limitExceeded(header, cookies)
   }
 }
@@ -42,7 +42,7 @@ class AsyncRateLimiter(rateLimitBy: RateLimitBy, nrRequest: Int, withinTimeRange
 
   def andThen(f: HulkHttpRequest => Future[HulkHttpResponse]) = apply(f)
 
-  def limitExceeded(header: Seq[HttpHeader], cookies: Seq[HttpCookiePair]): Future[Boolean] = {
+  private[hulk] def limitExceeded(header: Seq[HttpHeader], cookies: Seq[HttpCookiePair]): Future[Boolean] = {
     rateLimitBy match {
       case ip: IP =>
         extractIpFromHeader(header).map { ip =>
@@ -58,7 +58,8 @@ class AsyncRateLimiter(rateLimitBy: RateLimitBy, nrRequest: Int, withinTimeRange
 
   private def limitExceededForKey(key: String, nrRequest: Int, withinTimeRange: Duration, rateLimitCache: RateLimitCache): Future[Boolean] = {
     rateLimitCache.getRateLimitValue(key).flatMap { elOpt =>
-      if (elOpt.map(_.toInt).exists(_ > nrRequest) || nrRequest == 0) {
+      println(elOpt)
+      if (elOpt.map(_.toInt).exists(_ >= nrRequest) || nrRequest == 0) {
         Future(true)
       } else if (elOpt.isDefined) {
         rateLimitCache.updateRateLimitValue(key, elOpt.get.toInt + 1, withinTimeRange).map(_ => false)
