@@ -139,7 +139,7 @@ object LengthRequired {
   def apply[A <: ResponseFormat](bodyWriter: HttpResponseBodyWriter[A] = new EmptyHttpResponseWriter(), httpHeader: Seq[HttpHeader] = Seq()): HulkHttpResponse = Response(411, bodyWriter(), httpHeader)
 }
 
-object PreConditionFailed {
+object PreconditionFailed {
   def apply[A <: ResponseFormat](bodyWriter: HttpResponseBodyWriter[A] = new EmptyHttpResponseWriter(), httpHeader: Seq[HttpHeader] = Seq()): HulkHttpResponse = Response(412, bodyWriter(), httpHeader)
 }
 
@@ -163,7 +163,7 @@ object ExpectationFailed {
   def apply[A <: ResponseFormat](bodyWriter: HttpResponseBodyWriter[A] = new EmptyHttpResponseWriter(), httpHeader: Seq[HttpHeader] = Seq()): HulkHttpResponse = Response(417, bodyWriter(), httpHeader)
 }
 
-object PreconditionFailed {
+object PreconditionRequired {
   def apply[A <: ResponseFormat](bodyWriter: HttpResponseBodyWriter[A] = new EmptyHttpResponseWriter(), httpHeader: Seq[HttpHeader] = Seq()): HulkHttpResponse = Response(428, bodyWriter(), httpHeader)
 }
 
