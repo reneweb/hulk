@@ -16,7 +16,6 @@ trait HulkHttpResponse {
 }
 
 object HulkHttpResponse {
-  Ok()
   implicit private[hulk] def toAkkaHttpResponse(httpResponse: HulkHttpResponse): HttpResponse = {
     HttpResponse(httpResponse.statusCode, httpResponse.httpHeader, httpResponse.body)
   }
