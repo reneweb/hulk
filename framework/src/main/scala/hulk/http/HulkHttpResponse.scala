@@ -28,8 +28,6 @@ protected class EmptyHttpResponseWriter extends HttpResponseBodyWriter[Empty] {
   override def apply(): HttpResponseBody = HttpResponseBody(ContentTypes.NoContentType, ByteString.empty)
 }
 
-
-
 object Ok {
   def apply[A <: ResponseFormat](bodyWriter: HttpResponseBodyWriter[A] = new EmptyHttpResponseWriter(), httpHeader: Seq[HttpHeader] = Seq()): HulkHttpResponse = Response(200, bodyWriter(), httpHeader)
 }
