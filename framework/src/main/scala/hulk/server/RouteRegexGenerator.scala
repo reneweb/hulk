@@ -13,7 +13,7 @@ class RouteRegexGenerator(router: Router) {
     router.router.map{ case (routeDef, action) =>
       val pathVarNames = ":\\{[^}]*\\}".r.findAllIn(routeDef.path).toList.map(_.drop(2).dropRight(1)).map(_.split(":")(0).trim)
       val routeWithRegex = ":\\{[^}]*\\}".r.replaceAllIn(routeDef.path, r => {
-        val name = r.toString().drop(2).dropRight(1).split(":")(0)
+        val name = r.toString().drop(2).dropRight(1).split(":")(0).trim
         val actualRegex = r.toString().drop(2).dropRight(1).split(":").lift(1).map(_.trim).getOrElse("[^/]+")
         s"(?<$name>$actualRegex)"
       })
