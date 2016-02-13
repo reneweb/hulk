@@ -5,7 +5,7 @@ Hulk is a web framework to create RESTful API's. It is built on top of Akka HTTP
 Features include:
 
 - Basics (Routing, Filtering, Controller Actions)
-- Simple templating engine
+- Simple templating engine (using Mustache)
 - Rate limiting
 - Versioning
 - Swagger
@@ -16,6 +16,7 @@ Features yet to come:
 - HAL/ Json LD support
 - Performance Testing support
 - OAuth client/server
+- Websocket support
 
 ## Simple usage example ##
 
