@@ -17,8 +17,6 @@ import scala.concurrent.duration._
   */
 class HulkHttpServerTest extends Specification {
 
-  implicit val actorSystem = ActorSystem()
-  implicit val actorMaterializer = ActorMaterializer()
   val action = Action(request => Ok())
 
   "HulkHttpServer#run" should {
