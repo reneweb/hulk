@@ -5,8 +5,7 @@ lazy val commonSettings = Seq(
   name := "hulk",
   organization := "io.github.reneweb",
   version := "0.1.0",
-  scalaVersion := "2.11.7",
-  crossScalaVersions := Seq("2.10.6", "2.11.7")
+  scalaVersion := "2.11.7"
 )
 
 lazy val noPublishSettings = Seq(
