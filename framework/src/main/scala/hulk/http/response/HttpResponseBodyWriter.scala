@@ -7,7 +7,7 @@ import akka.util.ByteString
 import com.github.mustachejava.DefaultMustacheFactory
 import play.api.libs.json.{Json => PJson, JsValue}
 
-import scala.collection.JavaConversions
+import scala.collection.JavaConverters._
 import scala.xml.Elem
 
 /**
@@ -57,7 +57,7 @@ object HttpResponseBodyWriter {
         val mf = new DefaultMustacheFactory()
         val mustache = mf.compile(new StringReader(template.template), "response")
 
-        mustache.execute(writer, JavaConversions.mapAsJavaMap(template.data))
+        mustache.execute(writer, template.data.asJava)
         writer.close()
 
         HttpResponseBody(ContentTypes.`text/html(UTF-8)`, ByteString(writer.getBuffer.toString))
