@@ -68,7 +68,7 @@ class RequestHandlerTest extends Specification with Mockito {
       response.status.intValue() must equalTo(200)
     }
 
-    "return 404 if no appriopriate route was found" >> {
+    "return 404 if no appropriate route was found" >> {
       val httpRequest = HttpRequest(method = HttpMethods.GET, uri = Uri("/route/nonExistent"))
 
       val router = new Router() {
