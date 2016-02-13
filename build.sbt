@@ -3,17 +3,46 @@ import sbt.Keys._
 
 lazy val commonSettings = Seq(
   name := "hulk",
+  organization := "io.github.reneweb",
   version := "0.1.0",
   scalaVersion := "2.11.7",
   crossScalaVersions := Seq("2.10.6", "2.11.7")
 )
 
+lazy val noPublishSettings = Seq(
+  publish := (),
+  publishLocal := (),
+  bintrayRelease := (),
+  publishArtifact := false
+)
+
+lazy val publishSettings = Seq(
+  publishMavenStyle := true,
+  publishArtifact := true,
+  publishArtifact in Test := false,
+
+  bintrayReleaseOnPublish := false,
+  bintrayPackage := name.value,
+  bintrayOrganization in bintray := None,
+
+  licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
+  homepage := Some(url("https://github.com/reneweb/hulk")),
+  scmInfo := Some(
+    ScmInfo(
+      url("https://github.com/reneweb/hulk"),
+      "scm:git:git@github.com:reneweb/hulk.git"
+    )
+  )
+)
+
 lazy val root = (project in file("."))
+  .settings(noPublishSettings)
   .aggregate(framework, examples)
 
 lazy val framework = project
   .settings(commonSettings: _*)
-  .settings(moduleName := "framework")
+  .settings(publishSettings: _*)
+  .settings(moduleName := "hulk-framework")
   .settings(libraryDependencies ++= Seq (
     "com.typesafe.akka" % "akka-http-experimental_2.11" % "2.0.2",
     "org.slf4j" % "slf4j-api" % "1.7.13",
@@ -31,5 +60,6 @@ lazy val framework = project
 
 lazy val examples = project
   .settings(commonSettings: _*)
-  .settings(moduleName := "examples")
+  .settings(moduleName := "hulk-examples")
+  .settings(noPublishSettings)
   .dependsOn(framework)
