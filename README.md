@@ -1,5 +1,7 @@
 #Hulk#
 
+[![Build Status](https://travis-ci.org/reneweb/hulk.svg?branch=master)](https://travis-ci.org/reneweb/hulk)
+
 Hulk is a web framework to create RESTful API's. It is built on top of Akka HTTP.
 
 Features include:
