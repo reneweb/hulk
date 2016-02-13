@@ -15,6 +15,7 @@ Features yet to come:
 
 - HAL/ Json LD support
 - Performance Testing support
+- OAuth client/server
 
 ## Simple usage example ##
 
