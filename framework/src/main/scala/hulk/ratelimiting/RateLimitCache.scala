@@ -16,8 +16,8 @@ trait RateLimitCache {
   def getRateLimitValue(key: String): Future[Option[String]]
 }
 
-class DefaultEhCache extends RateLimitCache {
-  val cache = CacheManager.getInstance().addCacheIfAbsent("defaultRateLimiter")
+class DefaultEhCache(cacheName: String = "defaultRateLimiter") extends RateLimitCache {
+  val cache = CacheManager.getInstance().addCacheIfAbsent(cacheName)
 
   override def putRateLimitValue(key: String, currNrRequest: Int, withinTimeRange: Duration): Future[_] = {
     val el = new Element(key, currNrRequest)
