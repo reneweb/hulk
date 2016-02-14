@@ -39,8 +39,8 @@ lazy val root = (project in file("."))
   .aggregate(framework, examples)
 
 lazy val framework = project
-  .settings(commonSettings: _*)
-  .settings(publishSettings: _*)
+  .settings(commonSettings)
+  .settings(publishSettings)
   .settings(moduleName := "hulk-framework")
   .settings(libraryDependencies ++= Seq (
     "com.typesafe.akka" % "akka-http-experimental_2.11" % "2.0.2",
@@ -58,7 +58,8 @@ lazy val framework = project
   ))
 
 lazy val examples = project
-  .settings(commonSettings: _*)
-  .settings(moduleName := "hulk-examples")
+  .settings(commonSettings)
   .settings(noPublishSettings)
+  .settings(moduleName := "hulk-examples")
+  .settings(coverageExcludedPackages := "hulk\\..*")
   .dependsOn(framework)
