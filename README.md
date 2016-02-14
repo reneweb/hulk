@@ -24,7 +24,7 @@ Features yet to come:
 
 ### Set up dependency ###
 
-Hulk is distributed via jcenter. Make sure that it is available as a resolver.
+Hulk is distributed via jcenter. Make sure that it is available as a resolver in your build.
 Then add the dependency to your build:
 
 ```scala
