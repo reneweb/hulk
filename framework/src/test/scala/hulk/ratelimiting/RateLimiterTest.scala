@@ -15,8 +15,7 @@ import scala.concurrent.{Await, Future}
 /**
   * Created by reweber on 06/02/2016
   */
-class RateLimiterTest extends Specification with BeforeEach with Mockito {
-  sequential
+class RateLimiterTest extends Specification with Mockito {
 
   val ipHttpHeader = mock[HttpHeader]
   ipHttpHeader.is("x-real-ip") returns true
@@ -26,11 +25,9 @@ class RateLimiterTest extends Specification with BeforeEach with Mockito {
   cookie.name returns "key"
   cookie.value returns "myCookie"
 
-  override protected def before: Any = CacheManager.getInstance().clearAll()
-
   "RateLimiter#apply" should {
     "rate limit by IP if limit exceeded and set to use IP" >> {
-      val rateLimiterIp = RateLimiter(new DefaultEhCache)(RateLimitBy.ip, 5, 5 seconds)
+      val rateLimiterIp = RateLimiter(new DefaultEhCache("rl-apply-ip-le"))(RateLimitBy.ip, 5, 5 seconds)
       val mockedHttpRequest = mock[HulkHttpRequest]
       mockedHttpRequest.httpHeader returns Seq(ipHttpHeader)
 
@@ -45,7 +42,7 @@ class RateLimiterTest extends Specification with BeforeEach with Mockito {
     }
 
     "not rate limit by IP if limit is not exceeded and set to use IP" >> {
-      val rateLimiterIp = RateLimiter(new DefaultEhCache)(RateLimitBy.ip, 5, 5 seconds)
+      val rateLimiterIp = RateLimiter(new DefaultEhCache("rl-apply-ip-lne"))(RateLimitBy.ip, 5, 5 seconds)
       val mockedHttpRequest = mock[HulkHttpRequest]
       mockedHttpRequest.httpHeader returns Seq(ipHttpHeader)
 
@@ -58,7 +55,7 @@ class RateLimiterTest extends Specification with BeforeEach with Mockito {
     }
 
     "rate limit by Cookie if limit exceeded and set to use Cookie" >> {
-      val rateLimiterCookie = RateLimiter(new DefaultEhCache)(RateLimitBy.cookie("key"), 5, 5 seconds)
+      val rateLimiterCookie = RateLimiter(new DefaultEhCache("rl-apply-cookie-le"))(RateLimitBy.cookie("key"), 5, 5 seconds)
       val mockedHttpRequest = mock[HulkHttpRequest]
       mockedHttpRequest.cookies returns Seq(cookie)
 
@@ -72,7 +69,7 @@ class RateLimiterTest extends Specification with BeforeEach with Mockito {
     }
 
     "not rate limit by Cookie if limit is not exceeded and set to use Cookie" >> {
-      val rateLimiterCookie = RateLimiter(new DefaultEhCache)(RateLimitBy.cookie("key"), 5, 5 seconds)
+      val rateLimiterCookie = RateLimiter(new DefaultEhCache("rl-apply-cookie-lne"))(RateLimitBy.cookie("key"), 5, 5 seconds)
       val mockedHttpRequest = mock[HulkHttpRequest]
       mockedHttpRequest.cookies returns Seq(cookie)
 
@@ -87,7 +84,7 @@ class RateLimiterTest extends Specification with BeforeEach with Mockito {
 
   "RateLimiter#limitExceeded" should {
     "return true checked by IP if limit exceeded and set to use IP" >> {
-      val rateLimiterIp = RateLimiter(new DefaultEhCache)(RateLimitBy.ip, 5, 5 seconds)
+      val rateLimiterIp = RateLimiter(new DefaultEhCache("rl-le-ip-le"))(RateLimitBy.ip, 5, 5 seconds)
       val headers = Seq(ipHttpHeader)
       val cookies = Seq.empty[HttpCookiePair]
 
@@ -101,7 +98,7 @@ class RateLimiterTest extends Specification with BeforeEach with Mockito {
     }
 
     "return false checked by IP if limit exceeded and set to use IP" >> {
-      val rateLimiterIp = RateLimiter(new DefaultEhCache)(RateLimitBy.ip, 5, 5 seconds)
+      val rateLimiterIp = RateLimiter(new DefaultEhCache("rl-le-ip-lne"))(RateLimitBy.ip, 5, 5 seconds)
       val headers = Seq(ipHttpHeader)
       val cookies = Seq.empty[HttpCookiePair]
 
@@ -114,7 +111,7 @@ class RateLimiterTest extends Specification with BeforeEach with Mockito {
     }
 
     "return true checked by Cookie if limit exceeded and set to use Cookie" >> {
-      val rateLimiterCookie = RateLimiter(new DefaultEhCache)(RateLimitBy.cookie("key"), 5, 5 seconds)
+      val rateLimiterCookie = RateLimiter(new DefaultEhCache("rl-le-cookie-le"))(RateLimitBy.cookie("key"), 5, 5 seconds)
       val headers = Seq.empty[HttpHeader]
       val cookies = Seq(cookie)
 
@@ -128,7 +125,7 @@ class RateLimiterTest extends Specification with BeforeEach with Mockito {
     }
 
     "return false checked by Cookie if limit exceeded and set to use Cookie" >> {
-      val rateLimiterCookie = RateLimiter(new DefaultEhCache)(RateLimitBy.cookie("key"), 5, 5 seconds)
+      val rateLimiterCookie = RateLimiter(new DefaultEhCache("rl-le-cookie-lne"))(RateLimitBy.cookie("key"), 5, 5 seconds)
       val headers = Seq.empty[HttpHeader]
       val cookies = Seq(cookie)
 
@@ -143,7 +140,7 @@ class RateLimiterTest extends Specification with BeforeEach with Mockito {
 
   "AsyncRateLimiter#apply" should {
     "rate limit by IP if limit exceeded and set to use IP" >> {
-      val asyncRateLimiterIp = AsyncRateLimiter(new DefaultEhCache)(RateLimitBy.ip, 5, 5 seconds)
+      val asyncRateLimiterIp = AsyncRateLimiter(new DefaultEhCache("arl-apply-ip-le"))(RateLimitBy.ip, 5, 5 seconds)
       val mockedHttpRequest = mock[HulkHttpRequest]
       mockedHttpRequest.httpHeader returns Seq(ipHttpHeader)
 
@@ -158,7 +155,7 @@ class RateLimiterTest extends Specification with BeforeEach with Mockito {
     }
 
     "not rate limit by IP if limit is not exceeded and set to use IP" >> {
-      val asyncRateLimiterIp = AsyncRateLimiter(new DefaultEhCache)(RateLimitBy.ip, 5, 5 seconds)
+      val asyncRateLimiterIp = AsyncRateLimiter(new DefaultEhCache("arl-apply-ip-lne"))(RateLimitBy.ip, 5, 5 seconds)
       val mockedHttpRequest = mock[HulkHttpRequest]
       mockedHttpRequest.httpHeader returns Seq(ipHttpHeader)
 
@@ -171,7 +168,7 @@ class RateLimiterTest extends Specification with BeforeEach with Mockito {
     }
 
     "rate limit by Cookie if limit exceeded and set to use Cookie" >> {
-      val asyncRateLimiterCookie = AsyncRateLimiter(new DefaultEhCache)(RateLimitBy.cookie("key"), 5, 5 seconds)
+      val asyncRateLimiterCookie = AsyncRateLimiter(new DefaultEhCache("arl-apply-cookie-le"))(RateLimitBy.cookie("key"), 5, 5 seconds)
       val mockedHttpRequest = mock[HulkHttpRequest]
       mockedHttpRequest.cookies returns Seq(cookie)
 
@@ -185,7 +182,7 @@ class RateLimiterTest extends Specification with BeforeEach with Mockito {
     }
 
     "not rate limit by Cookie if limit is not exceeded and set to use Cookie" >> {
-      val asyncRateLimiterCookie = AsyncRateLimiter(new DefaultEhCache)(RateLimitBy.cookie("key"), 5, 5 seconds)
+      val asyncRateLimiterCookie = AsyncRateLimiter(new DefaultEhCache("arl-apply-cookie-lne"))(RateLimitBy.cookie("key"), 5, 5 seconds)
       val mockedHttpRequest = mock[HulkHttpRequest]
       mockedHttpRequest.cookies returns Seq(cookie)
 
@@ -200,7 +197,7 @@ class RateLimiterTest extends Specification with BeforeEach with Mockito {
 
   "AsyncRateLimiter#limitExceeded" should {
     "return true checked by IP if limit exceeded and set to use IP" >> {
-      val asyncRateLimiterIp = AsyncRateLimiter(new DefaultEhCache)(RateLimitBy.ip, 5, 5 seconds)
+      val asyncRateLimiterIp = AsyncRateLimiter(new DefaultEhCache("arl-le-ip-le"))(RateLimitBy.ip, 5, 5 seconds)
       val headers = Seq(ipHttpHeader)
       val cookies = Seq.empty[HttpCookiePair]
 
@@ -214,7 +211,7 @@ class RateLimiterTest extends Specification with BeforeEach with Mockito {
     }
 
     "return false checked by IP if limit exceeded and set to use IP" >> {
-      val asyncRateLimiterIp = AsyncRateLimiter(new DefaultEhCache)(RateLimitBy.ip, 5, 5 seconds)
+      val asyncRateLimiterIp = AsyncRateLimiter(new DefaultEhCache("arl-le-ip-lne"))(RateLimitBy.ip, 5, 5 seconds)
       val headers = Seq(ipHttpHeader)
       val cookies = Seq.empty[HttpCookiePair]
 
@@ -227,7 +224,7 @@ class RateLimiterTest extends Specification with BeforeEach with Mockito {
     }
 
     "return true checked by Cookie if limit exceeded and set to use Cookie" >> {
-      val asyncRateLimiterCookie = AsyncRateLimiter(new DefaultEhCache)(RateLimitBy.cookie("key"), 5, 5 seconds)
+      val asyncRateLimiterCookie = AsyncRateLimiter(new DefaultEhCache("arl-le-cookie-le"))(RateLimitBy.cookie("key"), 5, 5 seconds)
       val headers = Seq.empty[HttpHeader]
       val cookies = Seq(cookie)
 
@@ -241,7 +238,7 @@ class RateLimiterTest extends Specification with BeforeEach with Mockito {
     }
 
     "return false checked by Cookie if limit exceeded and set to use Cookie" >> {
-      val asyncRateLimiterCookie = AsyncRateLimiter(new DefaultEhCache)(RateLimitBy.cookie("key"), 5, 5 seconds)
+      val asyncRateLimiterCookie = AsyncRateLimiter(new DefaultEhCache("arl-le-cookie-lne"))(RateLimitBy.cookie("key"), 5, 5 seconds)
       val headers = Seq.empty[HttpHeader]
       val cookies = Seq(cookie)
 

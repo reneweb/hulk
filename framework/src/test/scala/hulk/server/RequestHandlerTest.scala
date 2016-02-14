@@ -6,6 +6,7 @@ import akka.stream.ActorMaterializer
 import hulk.filtering.Filter.Next
 import hulk.filtering.{Filter, FilterResult}
 import hulk.http.{Action, HulkHttpRequest, Ok, Unauthorized}
+import hulk.ratelimiting.{DefaultEhCache, RateLimitBy, RateLimiter, GlobalRateLimiting}
 import hulk.routing.{RouteDef, Router}
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
@@ -23,31 +24,31 @@ class RequestHandlerTest extends Specification with Mockito {
   implicit val actorMaterializer = ActorMaterializer()
   val action = Action(request => Ok())
 
-  //"RequestHandler#executeRateLimiting" should {
-//
-  //  "run rate limiting based on http request" >> {
-  //    val ipHttpHeader = mock[HttpHeader]
-  //    ipHttpHeader.is("x-real-ip") returns true
-  //    ipHttpHeader.value() returns "myIp"
-  //
-  //    val httpRequest = HttpRequest(headers = scala.collection.immutable.Seq(ipHttpHeader))
-//
-  //    val router = new Router() with GlobalRateLimiting {
-  //      override def router: Map[RouteDef, Action] = Map(
-  //        (HttpMethods.GET, "/route") -> action
-  //      )
-//
-  //      override def rateLimiter: RateLimiter = RateLimiter(RateLimitBy.ip, 5, 5 seconds)
-  //    }
-//
-  //    val handler = new RequestHandler(router, Map.empty, Seq.empty, None)
-//
-  //    val res = (1 to 6).map(_ => Await.result(handler.executeRateLimiting(httpRequest), 5 seconds))
-  //    res.size must equalTo(6)
-  //    res.take(5).map(_.toOption must beSome[HttpRequest])
-  //    res.last.swap.toOption must beSome[HttpResponse]
-  //  }.pendingUntilFixed("causes problems with cache when running with other rate limiter tests")
-  //}
+  "RequestHandler#executeRateLimiting" should {
+
+    "run rate limiting based on http request" >> {
+      val ipHttpHeader = mock[HttpHeader]
+      ipHttpHeader.is("x-real-ip") returns true
+      ipHttpHeader.value() returns "myIp"
+
+      val httpRequest = HttpRequest(headers = scala.collection.immutable.Seq(ipHttpHeader))
+
+      val router = new Router() with GlobalRateLimiting {
+        override def router: Map[RouteDef, Action] = Map(
+          (HttpMethods.GET, "/route") -> action
+        )
+
+        override def rateLimiter: RateLimiter = RateLimiter(new DefaultEhCache("globalRateLimiter"))(RateLimitBy.ip, 5, 5 seconds)
+      }
+
+      val handler = new RequestHandler(router, Map.empty, Seq.empty, None)
+
+      val res = (1 to 6).map(_ => Await.result(handler.executeRateLimiting(httpRequest), 5 seconds))
+      res.size must equalTo(6)
+      res.take(5).map(_.toOption must beSome[HttpRequest])
+      res.last.swap.toOption must beSome[HttpResponse]
+    }
+  }
 
   "RequestHandler#handleRequest" should {
 

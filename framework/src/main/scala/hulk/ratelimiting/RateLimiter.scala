@@ -58,7 +58,6 @@ class AsyncRateLimiter(rateLimitBy: RateLimitBy, nrRequest: Int, withinTimeRange
 
   private def limitExceededForKey(key: String, nrRequest: Int, withinTimeRange: Duration, rateLimitCache: RateLimitCache): Future[Boolean] = {
     rateLimitCache.getRateLimitValue(key).flatMap { elOpt =>
-      println(elOpt)
       if (elOpt.map(_.toInt).exists(_ >= nrRequest) || nrRequest == 0) {
         Future(true)
       } else if (elOpt.isDefined) {
