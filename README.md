@@ -18,7 +18,18 @@ Features yet to come:
 - OAuth client/server
 - Websocket support
 
-## Simple usage example ##
+## Getting started ##
+
+### Set up dependency ###
+
+Hulk is distributed via jcenter. Make sure that it is available as a resolver.
+Then add the dependency to your build:
+
+```scala
+libraryDependencies ++= Seq ("io.github.reneweb" % "hulk-framework_2.11" % "0.1.0")
+```
+
+### Simple usage example ###
 
 ```scala
 object Application extends App {
