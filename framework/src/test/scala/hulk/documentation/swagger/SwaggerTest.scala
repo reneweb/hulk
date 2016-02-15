@@ -18,6 +18,13 @@ class SwaggerTest extends Specification {
     override val name: String = "Some Name"
     override val description: String = "Some Description"
     override val apiVersion: String = "1.1"
+  }
+
+  val baseDocWithProducerConsumer = new ApiDocumentation with SwaggerBaseDocumentation {
+    override val host: String = "MyHost"
+    override val name: String = "Some Name"
+    override val description: String = "Some Description"
+    override val apiVersion: String = "1.1"
     override val produces: Seq[String] = Seq("application/json")
     override val consumes: Seq[String] = Seq("application/json")
   }
@@ -57,6 +64,19 @@ class SwaggerTest extends Specification {
           |{"swagger":"2.0",
           | "info":{"title":"Some Name","description":"Some Description","version":"1.1"},
           | "host":"MyHost","schemes":["http"],
+          | "paths":{}}
+        """.stripMargin))
+    }
+
+    "return base swagger json with producer/consumer if only passing swagger base including producer/consumer fields" >> {
+      val swagger = new Swagger(baseDocWithProducerConsumer, Seq())
+      val json = swagger.asJson
+
+      json must equalTo(Json.parse(
+        """
+          |{"swagger":"2.0",
+          | "info":{"title":"Some Name","description":"Some Description","version":"1.1"},
+          | "host":"MyHost","schemes":["http"],
           | "consumes":["application/json"],
           | "produces":["application/json"],
           | "paths":{}}
@@ -64,14 +84,15 @@ class SwaggerTest extends Specification {
     }
 
     "return swagger json for single endpoint if only passing one swagger endpoint" >> {
-      val swagger = new Swagger(baseDoc, singleEndpoint)
+      val swagger = new Swagger(baseDocWithProducerConsumer, singleEndpoint)
       val json = swagger.asJson
 
       json must equalTo(Json.parse(
         """
           |{"swagger":"2.0",
           | "info":{"title":"Some Name","description":"Some Description","version":"1.1"},
-          | "host":"MyHost","schemes":["http"],"consumes":["application/json"],
+          | "host":"MyHost","schemes":["http"],
+          | "consumes":["application/json"],
           | "produces":["application/json"],
           | "paths":{"/my/path":{"get":{"parameters":[{"name":"userId","in":"query","required":true}],"responses":{"200":{}}}}}
           |}
@@ -79,14 +100,15 @@ class SwaggerTest extends Specification {
     }
 
     "return swagger json for multiple endpoints if multiple ones are passed" >> {
-      val swagger = new Swagger(baseDoc, multipleEndpoint)
+      val swagger = new Swagger(baseDocWithProducerConsumer, multipleEndpoint)
       val json = swagger.asJson
 
       json must equalTo(Json.parse(
         """
           |{"swagger":"2.0",
           | "info":{"title":"Some Name","description":"Some Description","version":"1.1"},
-          | "host":"MyHost","schemes":["http"],"consumes":["application/json"],
+          | "host":"MyHost","schemes":["http"],
+          | "consumes":["application/json"],
           | "produces":["application/json"],
           | "paths":{
           |    "/my/path":{"get":{"parameters":[{"name":"userId","in":"query","required":true}],"responses":{"200":{}}}},
