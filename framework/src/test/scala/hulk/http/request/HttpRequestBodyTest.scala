@@ -73,7 +73,7 @@ class HttpRequestBodyTest extends Specification with Mockito {
   }
 
   "HttpRequestBody#asJson" should {
-    "pass body as json" >> {
+    "return body as json" >> {
       val json = """{"test":"SomeString"}"""
       val rawEntity = HttpEntity.Strict(ContentTypes.`application/json`, ByteString(json))
       val body = HttpRequestBody(rawEntity)
@@ -85,7 +85,7 @@ class HttpRequestBodyTest extends Specification with Mockito {
       content.get.toString must equalTo(json)
     }
 
-    "pass model from json data" >> {
+    "return model from json data" >> {
       case class Test(test:String)
       implicit def testReads = new Reads[Test] {
         override def reads(json: JsValue): JsResult[Test] = JsSuccess(Test((json \ "test").as[String]))
@@ -101,6 +101,23 @@ class HttpRequestBodyTest extends Specification with Mockito {
 
       content must haveClass[JsSuccess[JsValue]]
       content.get.test must equalTo("SomeString")
+    }
+
+    "return js failure if json data broken" >> {
+      case class Test(test:String)
+      implicit def testReads = new Reads[Test] {
+        override def reads(json: JsValue): JsResult[Test] = JsSuccess(Test((json \ "test").as[String]))
+      }
+
+      val json = """{"test":"broken"""
+
+      val rawEntity = HttpEntity.Strict(ContentTypes.`application/json`, ByteString(json))
+      val body = HttpRequestBody(rawEntity)
+
+      val contentFuture = body.asJson[Test]
+      val content = Await.result(contentFuture, 5 seconds)
+
+      content must haveClass[JsError]
     }
   }
 }
