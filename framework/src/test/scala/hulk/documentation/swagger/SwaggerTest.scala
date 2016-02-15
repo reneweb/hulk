@@ -38,6 +38,17 @@ class SwaggerTest extends Specification {
     override val params: Seq[ParameterDocumentation] = Seq(QueryParameterDocumentation("userId"))
   })
 
+  val singleEndpointWithOptionalFields = Seq(new ApiDocumentation with SwaggerRouteDocumentation {
+    override val name: String = "Some Name"
+    override val description: String = "Some Description"
+    override val method: HttpMethod = HttpMethods.GET
+    override val response: Seq[ResponseDocumentation] = Seq(ResponseDocumentation(200, Some("description"), Some("responseType")))
+    override val path: String = "/my/path"
+    override val params: Seq[ParameterDocumentation] = Seq(
+      QueryParameterDocumentation("userId", Some("description"), false, Some("dataType")),
+      PathParameterDocumentation("pathParam", Some("description"), false, Some("dataType")))
+  })
+
   val multipleEndpoint = Seq(new ApiDocumentation with SwaggerRouteDocumentation {
     override val name: String = "Some Name"
     override val description: String = "Some Description"
@@ -95,6 +106,32 @@ class SwaggerTest extends Specification {
           | "consumes":["application/json"],
           | "produces":["application/json"],
           | "paths":{"/my/path":{"get":{"parameters":[{"name":"userId","in":"query","required":true}],"responses":{"200":{}}}}}
+          |}
+        """.stripMargin))
+    }
+
+    "return swagger json for single endpoint with optional data if only passing one swagger endpoint including optional data" >> {
+      val swagger = new Swagger(baseDocWithProducerConsumer, singleEndpointWithOptionalFields)
+      val json = swagger.asJson
+
+      json must equalTo(Json.parse(
+        """
+          |{"swagger":"2.0",
+          | "info":{"title":"Some Name","description":"Some Description","version":"1.1"},
+          | "host":"MyHost","schemes":["http"],
+          | "consumes":["application/json"],
+          | "produces":["application/json"],
+          | "paths":{
+          |     "/my/path":{
+          |         "get":{
+          |             "parameters":[
+          |                 {"name":"userId","in":"query","required":false,"description":"description","type":"dataType"},
+          |                 {"name":"pathParam","in":"path","required":false,"description":"description","type":"dataType"}
+          |             ],
+          |             "responses":{"200":{"description":"description","type":"responseType"}}
+          |         }
+          |     }
+          | }
           |}
         """.stripMargin))
     }
