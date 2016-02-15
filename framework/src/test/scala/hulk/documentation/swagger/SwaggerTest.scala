@@ -18,6 +18,8 @@ class SwaggerTest extends Specification {
     override val name: String = "Some Name"
     override val description: String = "Some Description"
     override val apiVersion: String = "1.1"
+    override val produces: Seq[String] = Seq("application/json")
+    override val consumes: Seq[String] = Seq("application/json")
   }
 
   val singleEndpoint = Seq(new ApiDocumentation with SwaggerRouteDocumentation {
@@ -50,21 +52,47 @@ class SwaggerTest extends Specification {
       val swagger = new Swagger(baseDoc, Seq())
       val json = swagger.asJson
 
-      json.toString() must equalTo("""{"swagger":"2.0","info":{"title":"Some Name","description":"Some Description","version":"1.1"},"host":"MyHost","schemes":["http"],"paths":{}}""")
+      json must equalTo(Json.parse(
+        """
+          |{"swagger":"2.0",
+          | "info":{"title":"Some Name","description":"Some Description","version":"1.1"},
+          | "host":"MyHost","schemes":["http"],
+          | "consumes":["application/json"],
+          | "produces":["application/json"],
+          | "paths":{}}
+        """.stripMargin))
     }
 
     "return swagger json for single endpoint if only passing one swagger endpoint" >> {
       val swagger = new Swagger(baseDoc, singleEndpoint)
       val json = swagger.asJson
 
-      json.toString() must equalTo("""{"swagger":"2.0","info":{"title":"Some Name","description":"Some Description","version":"1.1"},"host":"MyHost","schemes":["http"],"paths":{"/my/path":{"get":{"parameters":[{"name":"userId","in":"query","required":true}],"responses":{"200":{}}}}}}""")
+      json must equalTo(Json.parse(
+        """
+          |{"swagger":"2.0",
+          | "info":{"title":"Some Name","description":"Some Description","version":"1.1"},
+          | "host":"MyHost","schemes":["http"],"consumes":["application/json"],
+          | "produces":["application/json"],
+          | "paths":{"/my/path":{"get":{"parameters":[{"name":"userId","in":"query","required":true}],"responses":{"200":{}}}}}
+          |}
+        """.stripMargin))
     }
 
     "return swagger json for multiple endpoints if multiple ones are passed" >> {
       val swagger = new Swagger(baseDoc, multipleEndpoint)
       val json = swagger.asJson
 
-      json.toString() must equalTo("""{"swagger":"2.0","info":{"title":"Some Name","description":"Some Description","version":"1.1"},"host":"MyHost","schemes":["http"],"paths":{"/my/path":{"get":{"parameters":[{"name":"userId","in":"query","required":true}],"responses":{"200":{}}}},"/my/path/other":{"patch":{}}}}""")
+      json must equalTo(Json.parse(
+        """
+          |{"swagger":"2.0",
+          | "info":{"title":"Some Name","description":"Some Description","version":"1.1"},
+          | "host":"MyHost","schemes":["http"],"consumes":["application/json"],
+          | "produces":["application/json"],
+          | "paths":{
+          |    "/my/path":{"get":{"parameters":[{"name":"userId","in":"query","required":true}],"responses":{"200":{}}}},
+          |    "/my/path/other":{"patch":{}}}
+          |}
+        """.stripMargin))
     }
   }
 
