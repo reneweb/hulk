@@ -3,10 +3,8 @@ package hulk.ratelimiting
 import akka.http.scaladsl.model.HttpHeader
 import akka.http.scaladsl.model.headers.HttpCookiePair
 import hulk.http.{HulkHttpRequest, Ok}
-import net.sf.ehcache.CacheManager
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
-import org.specs2.specification.BeforeEach
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
