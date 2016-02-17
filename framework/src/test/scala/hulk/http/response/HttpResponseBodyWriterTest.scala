@@ -1,5 +1,7 @@
 package hulk.http.response
 
+import java.io.{ByteArrayInputStream, InputStream, StringReader, InputStreamReader}
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.ContentTypes
 import akka.stream.ActorMaterializer
@@ -7,6 +9,8 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import play.api.libs.json.{Json => PJson}
 
+import scala.io.Codec
+import scala.reflect.io.File
 import scala.xml.{XML, Elem}
 
 /**
@@ -64,9 +68,22 @@ class HttpResponseBodyWriterTest extends Specification  with Mockito {
   }
 
   "HttpResponseBodyWriter#mustacheAsHtmlToHttpResponseBodyWriter" should {
-    "write mustache as html to response" >> {
+    "write mustache string template as html to response" >> {
       val string = "someString"
       val template = MustacheTemplate("{{test}}", Map("test" -> string))
+      val body = HttpResponseBodyWriter.mustacheAsHtmlToHttpResponseBodyWriter(template)()
+      val resultString = body.data.decodeString("UTF-8")
+
+      body.contentType must equalTo(ContentTypes.`text/html(UTF-8)`)
+      resultString must equalTo(string)
+    }
+
+    "write mustache file template as html to response" >> {
+      val string = "someString"
+      val fileTemplate = mock[File]
+      fileTemplate.reader(Codec.UTF8) returns new InputStreamReader(new ByteArrayInputStream("{{test}}".getBytes))
+
+      val template = MustacheTemplate(fileTemplate, Map("test" -> string))
       val body = HttpResponseBodyWriter.mustacheAsHtmlToHttpResponseBodyWriter(template)()
       val resultString = body.data.decodeString("UTF-8")
 

@@ -8,6 +8,7 @@ import com.github.mustachejava.DefaultMustacheFactory
 import play.api.libs.json.{Json => PJson, JsValue}
 
 import scala.collection.JavaConverters._
+import scala.io.Codec
 import scala.xml.Elem
 
 /**
@@ -53,9 +54,14 @@ object HttpResponseBodyWriter {
   implicit def mustacheAsHtmlToHttpResponseBodyWriter(template: MustacheTemplate[_]): HttpResponseBodyWriter[Html] = {
     new HttpResponseBodyWriter[Html] {
       override def apply(): HttpResponseBody = {
+        val reader = template.template.fold(
+          stringTemplate => new StringReader(stringTemplate),
+          fileTemplate => fileTemplate.reader(Codec.UTF8)
+        )
+
         val writer = new StringWriter()
         val mf = new DefaultMustacheFactory()
-        val mustache = mf.compile(new StringReader(template.template), "response")
+        val mustache = mf.compile(reader, "response")
 
         mustache.execute(writer, template.data.asJava)
         writer.close()
