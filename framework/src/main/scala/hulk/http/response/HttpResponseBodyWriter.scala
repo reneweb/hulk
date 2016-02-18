@@ -63,10 +63,18 @@ object HttpResponseBodyWriter {
         val mf = new DefaultMustacheFactory()
         val mustache = mf.compile(reader, "response")
 
-        mustache.execute(writer, template.data.asJava)
+        mustache.execute(writer, dataJavaConversion(template.data))
         writer.close()
 
         HttpResponseBody(ContentTypes.`text/html(UTF-8)`, ByteString(writer.getBuffer.toString))
+      }
+
+      private def dataJavaConversion[A](data: A): Any = {
+        data match {
+          case data: Seq[_] => data.map(dataJavaConversion).asJava
+          case data: Map[_, _] => data.mapValues(dataJavaConversion).asJava
+          case d =>  d
+        }
       }
     }
   }

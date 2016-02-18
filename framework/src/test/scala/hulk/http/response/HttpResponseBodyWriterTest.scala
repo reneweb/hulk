@@ -90,6 +90,16 @@ class HttpResponseBodyWriterTest extends Specification  with Mockito {
       body.contentType must equalTo(ContentTypes.`text/html(UTF-8)`)
       resultString must equalTo(string)
     }
+
+    "write mustache string template with list as html to response" >> {
+      val string = "someString"
+      val template = MustacheTemplate("{{#testM}}{{test}}{{/testM}}", Map("testM" -> Seq(Map("test" -> string), Map("test" -> string))))
+      val body = HttpResponseBodyWriter.mustacheAsHtmlToHttpResponseBodyWriter(template)()
+      val resultString = body.data.decodeString("UTF-8")
+
+      body.contentType must equalTo(ContentTypes.`text/html(UTF-8)`)
+      resultString must equalTo(string + string)
+    }
   }
 
   "HttpResponseBodyWriter#byteArrayAsBinaryToHttpResponseBodyWriter" should {
