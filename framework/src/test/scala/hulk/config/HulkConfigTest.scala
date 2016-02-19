@@ -1,10 +1,9 @@
 package hulk.config
 
 import akka.actor.ActorSystem
-import akka.http.ServerSettings
+import akka.http.scaladsl.settings.ServerSettings
 import com.codahale.metrics.MetricRegistry
 import hulk.config.versioning.{AcceptHeaderVersioning, Versioning}
-import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 
 /**
@@ -91,7 +90,7 @@ class HulkConfigTest extends Specification {
 
   "HulkConfig#serverSettings" should {
     "return some interface if set" >> {
-      val i = Some(ServerSettings(None)(ActorSystem()))
+      val i = Some(ServerSettings(ActorSystem()))
 
       val config = new HulkConfig {
         override def serverSettings: Option[ServerSettings] = i
