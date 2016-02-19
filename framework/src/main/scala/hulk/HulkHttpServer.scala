@@ -82,7 +82,7 @@ class HulkHttpServer(router: Router, hulkConfig: Option[HulkConfig])
       }
 
     serverSettingsOpt.map { serverSettings =>
-      Http().bindAndHandle(flow, interface, port, serverSettings)
+      Http().bindAndHandle(flow, interface, port, settings = serverSettings)
     }.getOrElse {
       Http().bindAndHandle(flow, interface, port)
     }

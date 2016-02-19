@@ -1,6 +1,6 @@
 package hulk.config
 
-import akka.http.ServerSettings
+import akka.http.scaladsl.settings.ServerSettings
 import com.codahale.metrics.MetricRegistry
 import hulk.config.versioning.Versioning
 
