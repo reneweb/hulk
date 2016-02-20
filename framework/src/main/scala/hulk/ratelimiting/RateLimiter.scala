@@ -60,7 +60,7 @@ class AsyncRateLimiter(rateLimitBy: RateLimitBy, nrRequest: Int, withinTimeRange
     rateLimitCache.getRateLimitValue(key).flatMap {
       case Some(el) if el.toInt >= nrRequest => Future(true)
       case _ if nrRequest == 0 => Future(true)
-      case elOpt@Some(el) => rateLimitCache.updateRateLimitValue(key, elOpt.get.toInt + 1, withinTimeRange).map(_ => false)
+      case Some(el) => rateLimitCache.updateRateLimitValue(key, el.toInt + 1, withinTimeRange).map(_ => false)
       case _ => rateLimitCache.putRateLimitValue(key, 1, withinTimeRange).map(_ => false)
     }
   }
