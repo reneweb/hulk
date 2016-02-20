@@ -4,7 +4,7 @@ import sbt.Keys._
 lazy val commonSettings = Seq(
   name := "hulk",
   organization := "io.github.reneweb",
-  version := "0.1.0",
+  version := "0.1.1",
   scalaVersion := "2.11.7"
 )
 
