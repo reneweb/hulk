@@ -1,7 +1,7 @@
 package hulk.config
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.settings.ServerSettings
+import akka.http.ServerSettings
 import com.codahale.metrics.MetricRegistry
 import hulk.config.versioning.{AcceptHeaderVersioning, Versioning}
 import org.specs2.mutable.Specification
