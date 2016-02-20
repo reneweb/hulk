@@ -57,14 +57,11 @@ class AsyncRateLimiter(rateLimitBy: RateLimitBy, nrRequest: Int, withinTimeRange
   }
 
   private def limitExceededForKey(key: String, nrRequest: Int, withinTimeRange: Duration, rateLimitCache: RateLimitCache): Future[Boolean] = {
-    rateLimitCache.getRateLimitValue(key).flatMap { elOpt =>
-      if (elOpt.map(_.toInt).exists(_ >= nrRequest) || nrRequest == 0) {
-        Future(true)
-      } else if (elOpt.isDefined) {
-        rateLimitCache.updateRateLimitValue(key, elOpt.get.toInt + 1, withinTimeRange).map(_ => false)
-      } else {
-        rateLimitCache.putRateLimitValue(key, 1, withinTimeRange).map(_ => false)
-      }
+    rateLimitCache.getRateLimitValue(key).flatMap {
+      case Some(el) if el.toInt >= nrRequest => Future(true)
+      case _ if nrRequest == 0 => Future(true)
+      case elOpt@Some(el) => rateLimitCache.updateRateLimitValue(key, elOpt.get.toInt + 1, withinTimeRange).map(_ => false)
+      case _ => rateLimitCache.putRateLimitValue(key, 1, withinTimeRange).map(_ => false)
     }
   }
 
