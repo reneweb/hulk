@@ -46,7 +46,7 @@ class RequestHandler(router: Router, routes: Map[RouteDefWithRegex, Action], fil
     val incomingFilterResultOpt = findIncomingFilter(filters, outgoingFilterResults.size)
 
     val runIncomingFilterWithRequest = runIncomingFilter(hulkHttpRequest) _
-    val response = incomingFilterResultOpt.map(runIncomingFilterWithRequest)
+    val response = incomingFilterResultOpt.flatMap(runIncomingFilterWithRequest)
       .getOrElse(runActionIfMatch(versionOpt, matchedRoute, hulkHttpRequest))
 
     outgoingFilterResults
@@ -69,12 +69,19 @@ class RequestHandler(router: Router, routes: Map[RouteDefWithRegex, Action], fil
   }
 
   private def removeVersionFromRequestIfPathVersioned(request: HttpRequest, versionOpt: Option[String]): HttpRequest = {
-    hulkConfig.flatMap { config =>
-      config.versioning.map { c => c match {
-        case p: PathVersioning => request.copy(uri = request.uri.copy(path = request.uri.path.dropChars(versionOpt.get.length + 1)))
-        case _ => request
-      }}
-    }.getOrElse(request)
+    val resultRequest =
+      for(
+        config <- hulkConfig;
+        configVersioning <- config.versioning;
+        version <- versionOpt
+      ) yield {
+        configVersioning match {
+          case p: PathVersioning => request.copy(uri = request.uri.copy(path = request.uri.path.dropChars(version.length + 1)))
+          case _ => request
+        }
+      }
+
+    resultRequest.getOrElse(request)
   }
 
   private def findVersion(request: HttpRequest): Option[String] = {
@@ -91,7 +98,8 @@ class RequestHandler(router: Router, routes: Map[RouteDefWithRegex, Action], fil
   private def extractPathVariables(matchedRoute: Option[(RouteDefWithRegex, Action)], request: HttpRequest): Map[String, String] = {
     matchedRoute.map { case (routeDef, action) =>
       routeDef.pathVarNames.map { pathVarName =>
-        Try(routeDef.path.r(routeDef.pathVarNames: _*).findFirstMatchIn(request.uri.path.toString()).get.group(pathVarName))
+        Try(routeDef.path.r(routeDef.pathVarNames: _*).findFirstMatchIn(request.uri.path.toString()).map(_.group(pathVarName)))
+          .toOption.flatten
           .map(m => Some(pathVarName -> m))
           .getOrElse(None)
       }.filter(_.isDefined).map(_.get).toMap
@@ -117,8 +125,8 @@ class RequestHandler(router: Router, routes: Map[RouteDefWithRegex, Action], fil
   private def findIncomingFilter(filtersSeq: Seq[Filter], outgoingFilterResultsSize: Int): Option[Filter] =
     filtersSeq.lift(outgoingFilterResultsSize)
 
-  private def runIncomingFilter(httpRequest: HulkHttpRequest)(filter: Filter) = {
-    filter.filter(r => Future(r))(httpRequest).result.swap.toOption.get
+  private def runIncomingFilter(httpRequest: HulkHttpRequest)(filter: Filter): Option[Future[HulkHttpResponse]] = {
+    filter.filter(r => Future(r))(httpRequest).result.swap.toOption
   }
 
   private def executeOutgoingFilters(filters: Seq[Filter], httpRequest: HulkHttpRequest) = {
@@ -126,12 +134,13 @@ class RequestHandler(router: Router, routes: Map[RouteDefWithRegex, Action], fil
       filters.headOption.map(f => {
         val filterResult = f.filter(r => Future(r))(httpRequest)
 
-        if(filterResult.result.isRight) {
-          val returnSeq = rec(filters.tail, httpRequest)
-          returnSeq :+ filterResult.result.toOption.get
-        } else {
-          Seq.empty
-        }
+        filterResult.result.fold(
+          response => Seq.empty,
+          responseFunc => {
+            val returnSeq = rec(filters.tail, httpRequest)
+            returnSeq :+ responseFunc
+          }
+        )
       }).getOrElse(Seq.empty)
 
     rec(filters, httpRequest).reverse
