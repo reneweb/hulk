@@ -1,10 +1,15 @@
 package hulk.http
 
 import akka.http.scaladsl.model._
+import akka.stream.ActorMaterializer
 import akka.util.ByteString
 import hulk.http.response.{ResponseFormat, HttpResponseBodyWriter, HttpResponseBody}
 
 import scala.collection.immutable.Seq
+import scala.concurrent.Future
+import scala.concurrent.duration._
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Created by reweber on 18/12/2015
@@ -18,6 +23,18 @@ trait HulkHttpResponse {
 object HulkHttpResponse {
   implicit private[hulk] def toAkkaHttpResponse(httpResponse: HulkHttpResponse): HttpResponse = {
     HttpResponse(httpResponse.statusCode, httpResponse.httpHeader, httpResponse.body)
+  }
+
+  implicit private[hulk] def fromAkkaHttpResponse(httpResponse: HttpResponse)(implicit actorMaterializer: ActorMaterializer, timeout: FiniteDuration = 1 seconds): Future[HulkHttpResponse] = {
+    val contentType = httpResponse.entity.contentType
+    val body = httpResponse.entity.toStrict(timeout).map(_.data)
+
+    val httpResponseBody = body.map(new HttpResponseBody(contentType, _))
+    val response = httpResponseBody.map(body =>
+      Response(httpResponse.status, body, httpResponse.headers)
+    )
+
+    response
   }
 }
 
