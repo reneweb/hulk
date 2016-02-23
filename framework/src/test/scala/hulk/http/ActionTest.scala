@@ -18,7 +18,7 @@ class ActionTest extends Specification with Mockito {
       val request = mock[HulkHttpRequest]
 
       val action = Action.apply(request => Ok())
-      val response = Await.result(action.run(request).get, 5 seconds)
+      val response = action.run(request).get
 
       response.statusCode.intValue() must equalTo(200)
     }
@@ -27,7 +27,7 @@ class ActionTest extends Specification with Mockito {
       val request = mock[HulkHttpRequest]
 
       val action = Action.apply( "v1" -> {request: HulkHttpRequest => Ok()} )
-      val response = Await.result(action.run("v1", request).get, 5 seconds)
+      val response = action.run("v1", request).get
 
       response.statusCode.intValue() must equalTo(200)
     }

@@ -1,14 +1,15 @@
 package hulk.server
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.model.ws.UpgradeToWebsocket
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.stream.ActorMaterializer
+import akka.stream.scaladsl.Sink
 import cats.data.Xor
 import hulk.config.HulkConfig
 import hulk.config.versioning.{AcceptHeaderVersioning, AcceptVersionHeaderVersioning, PathVersioning}
 import hulk.filtering.Filter
 import hulk.http._
-import hulk.http.request.HttpRequestBody
 import hulk.ratelimiting.GlobalRateLimiting
 import hulk.routing.Router
 
@@ -47,24 +48,42 @@ class RequestHandler(router: Router, routes: Map[RouteDefWithRegex, Action], fil
 
     val runIncomingFilterWithRequest = runIncomingFilter(hulkHttpRequest) _
     val response = incomingFilterResultOpt.flatMap(runIncomingFilterWithRequest)
-      .getOrElse(runActionIfMatch(versionOpt, matchedRoute, hulkHttpRequest))
+      .getOrElse(runActionIfMatch(versionOpt, matchedRoute, hulkHttpRequest, request))
 
     outgoingFilterResults
       .foldLeft(response) { case (resp, filterResult) => resp.flatMap(filterResult) }
       .map(toAkkaHttpResponse => toAkkaHttpResponse)
   }
 
-  private def runActionIfMatch(versionOpt: Option[String], matchedRoute: Option[(RouteDefWithRegex, Action)], httpRequest: HulkHttpRequest): Future[HulkHttpResponse] = {
+  private def runActionIfMatch(versionOpt: Option[String], matchedRoute: Option[(RouteDefWithRegex, Action)],
+                               httpRequest: HulkHttpRequest, rawHttpRequest: HttpRequest): Future[HulkHttpResponse] = {
     matchedRoute.map { routeWithAction =>
-      runAction(versionOpt, httpRequest, routeWithAction)
-    }.getOrElse(Action { req => NotFound() }.run(httpRequest).get)
+      runAction(versionOpt, routeWithAction, httpRequest, rawHttpRequest)
+    }.getOrElse(Action { req => NotFound() }.run(httpRequest).map(Future(_)).get)
   }
 
-  private def runAction(versionOpt: Option[String], httpRequest: HulkHttpRequest, routeWithAction: (RouteDefWithRegex, Action)): Future[HulkHttpResponse] = {
-    versionOpt.map { version =>
-      routeWithAction._2.run(version, httpRequest).getOrElse(Future(NotFound()))
-    }.getOrElse {
-      routeWithAction._2.run(httpRequest).getOrElse(Future(NotFound()))
+  private def runAction(versionOpt: Option[String], routeWithAction: (RouteDefWithRegex, Action),
+                        httpRequest: HulkHttpRequest, rawHttpRequest: HttpRequest): Future[HulkHttpResponse] = {
+    def runActionForWs(versionOpt: Option[String], action: WebSocketAction) = {
+      val response = versionOpt.fold(action.run())(version => action.run(version))
+
+      rawHttpRequest.header[UpgradeToWebsocket] match {
+        case  Some(upgrade) =>
+          response.map { case (sender, receiver) =>
+            HulkHttpResponse.fromAkkaHttpResponse(upgrade.handleMessagesWithSinkSource(Sink.foreach(receiver), sender))
+          }.getOrElse(Future(NotFound()))
+        case _ => Future(NotFound())
+      }
+    }
+
+    (versionOpt, routeWithAction._2) match {
+      case (Some(version), action: SyncAction) => action.run(version, httpRequest).map(Future(_)).getOrElse(Future(NotFound()))
+      case (None, action: SyncAction) => action.run(httpRequest).map(Future(_)).getOrElse(Future(NotFound()))
+      case (Some(version), action: AsyncAction) => action.run(version, httpRequest).getOrElse(Future(NotFound()))
+      case (None, action: AsyncAction) => action.run(httpRequest).getOrElse(Future(NotFound()))
+      case (Some(version), action: WebSocketAction) => runActionForWs(Some(version), action)
+      case (None, action: WebSocketAction) => runActionForWs(None, action)
+      case (_, _) => throw new IllegalStateException("No appropriate action to run")
     }
   }
 

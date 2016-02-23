@@ -26,7 +26,7 @@ class SwaggerControllerTest extends Specification with Mockito {
 
       val responseOpt = action.run(mockedHttpRequest)
 
-      val response = Await.result(responseOpt.get, 5 seconds)
+      val response = responseOpt.get
       response.statusCode.intValue() must equalTo(200)
       response.body.data.decodeString("UTF-8") must equalTo(json.toString())
     }

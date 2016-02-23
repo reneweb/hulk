@@ -1,7 +1,7 @@
 package hulk.routing
 
 import akka.http.scaladsl.model.HttpMethods
-import hulk.http.{Action, Ok, HulkHttpRequest}
+import hulk.http.{SyncAction, Action, Ok, HulkHttpRequest}
 import hulk.ratelimiting.{RateLimitBy, DefaultEhCache, RateLimiter}
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
@@ -22,8 +22,7 @@ class RouterTest extends Specification with Mockito {
         )
       }
 
-      val responseFuture = router.router.get(RouteDef(Some(HttpMethods.GET), "/test")).get.run(mock[HulkHttpRequest]).get
-      val response = Await.result(responseFuture, 5 seconds)
+      val response = router.router.get(RouteDef(Some(HttpMethods.GET), "/test")).get.asInstanceOf[SyncAction].run(mock[HulkHttpRequest]).get
 
       response.statusCode.intValue() must equalTo(200)
 
@@ -36,9 +35,7 @@ class RouterTest extends Specification with Mockito {
         )
       }
 
-      val responseFuture = router.router.get(RouteDef(None, "/test")).get.run(mock[HulkHttpRequest]).get
-      val response = Await.result(responseFuture, 5 seconds)
-
+      val response = router.router.get(RouteDef(None, "/test")).get.asInstanceOf[SyncAction].run(mock[HulkHttpRequest]).get
       response.statusCode.intValue() must equalTo(200)
     }
   }
