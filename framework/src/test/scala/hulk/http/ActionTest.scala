@@ -1,5 +1,7 @@
 package hulk.http
 
+import akka.http.scaladsl.model.ws.{TextMessage, Message}
+import akka.stream.scaladsl.Source
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 
@@ -68,6 +70,46 @@ class ActionTest extends Specification with Mockito {
       val responseOpt = action.run("v2", request)
 
       responseOpt must be(None)
+    }
+  }
+
+  "WebSocketAction#run" should {
+    "run action" >> {
+      val source = Source.single( TextMessage(""))
+      val func = (msg: Message) => {}
+
+      val action = WebSocketAction.apply(source, func)
+      val resultOpt = action.run()
+
+      resultOpt must beSome
+
+      val (sourceRes, funcRes) = resultOpt.get
+      sourceRes must equalTo(source)
+      funcRes must equalTo(funcRes)
+    }
+
+    "run action of specified version" >> {
+      val source = Source.single( TextMessage(""))
+      val func = (msg: Message) => {}
+
+      val action = WebSocketAction.apply("v1" -> (source, func))
+      val resultOpt = action.run("v1")
+
+      resultOpt must beSome
+
+      val (sourceRes, funcRes) = resultOpt.get
+      sourceRes must equalTo(source)
+      funcRes must equalTo(funcRes)
+    }
+
+    "return none if running action with non existent version" >> {
+      val source = Source.single( TextMessage(""))
+      val func = (msg: Message) => {}
+
+      val action = WebSocketAction.apply("v1" -> (source, func))
+      val resultOpt = action.run("v2")
+
+      resultOpt must beNone
     }
   }
 }
