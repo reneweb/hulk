@@ -10,7 +10,7 @@ import scala.collection.mutable
 /**
   * Created by reweber on 28/02/2016
   */
-class DefaultWebSocketSenderActor(queueSize: Option[Int] = None) extends ActorPublisher[Message] {
+class DefaultWebSocketSenderActor(queueSize: Option[Int]) extends ActorPublisher[Message] {
   var queue: mutable.Queue[Message] = mutable.Queue()
 
   override def receive: Actor.Receive = {

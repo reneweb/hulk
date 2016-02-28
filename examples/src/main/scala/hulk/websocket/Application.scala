@@ -11,6 +11,7 @@ import akka.stream.scaladsl._
 import hulk.HulkHttpServer
 import hulk.http.response.Text
 import hulk.http._
+import hulk.http.ws.DefaultWebSocketSenderActor
 import hulk.routing.{*, RouteDef, Router}
 
 import scala.collection.mutable
@@ -36,32 +37,10 @@ class SimpleRouter() extends Router {
 
 class SimpleController() {
   implicit val system = ActorSystem("system")
-  val senderActor = system.actorOf(Props[WsSenderActor])
+  val senderActor = system.actorOf(Props(classOf[DefaultWebSocketSenderActor], None))
 
 
   def testGet = WebSocketAction(Source.fromPublisher(ActorPublisher(senderActor)), msg => {
     senderActor ! msg
   })
-}
-
-class WsSenderActor extends ActorPublisher[Message] {
-  var queue: mutable.Queue[Message] = mutable.Queue()
-
-  override def receive: Actor.Receive = {
-    case msg: Message =>
-      queue.enqueue(msg)
-      publishIfNeeded()
-    case Request(cnt) =>
-      publishIfNeeded()
-    case Cancel => context.stop(self)
-    case _ =>
-
-  }
-
-  def publishIfNeeded() = {
-    while (queue.nonEmpty && isActive && totalDemand > 0) {
-      onNext(queue.dequeue())
-    }
-  }
-
 }
