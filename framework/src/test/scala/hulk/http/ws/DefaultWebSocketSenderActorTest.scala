@@ -16,11 +16,11 @@ import scala.concurrent.duration._
   */
 class DefaultWebSocketSenderActorTest extends Specification {
 
-  implicit val system = ActorSystem()
-  implicit val materializer = ActorMaterializer()
-
   "DefaultWebSocketSenderActor#receive" should {
     "put message into queue and publish if queue not full and able to publish" >> {
+      implicit val system = ActorSystem()
+      implicit val materializer = ActorMaterializer()
+
       val actor = system.actorOf(Props( classOf[DefaultWebSocketSenderActor], None))
       val source = Source.fromPublisher(ActorPublisher(actor))
       val probe = TestProbe()
@@ -33,6 +33,9 @@ class DefaultWebSocketSenderActorTest extends Specification {
     }
 
     "put message not into queue and not publish if queue full" >> {
+      implicit val system = ActorSystem()
+      implicit val materializer = ActorMaterializer()
+
       val actor = system.actorOf(Props( classOf[DefaultWebSocketSenderActor], Some(0)))
       val source = Source.fromPublisher(ActorPublisher(actor))
       val probe = TestProbe()
@@ -45,6 +48,9 @@ class DefaultWebSocketSenderActorTest extends Specification {
     }
 
     "publish if request received and queue not empty" >> {
+      implicit val system = ActorSystem()
+      implicit val materializer = ActorMaterializer()
+
       val actor = system.actorOf(Props( classOf[DefaultWebSocketSenderActor], None))
       val source = Source.fromPublisher(ActorPublisher(actor))
       val probe = TestProbe()
