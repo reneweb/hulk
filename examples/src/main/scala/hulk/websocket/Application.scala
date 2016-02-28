@@ -1,22 +1,13 @@
 package hulk.websocket
 
-import akka.actor.Actor.Receive
 import akka.actor._
 import akka.http.scaladsl.model.HttpMethods
-import akka.http.scaladsl.model.ws.Message
-import akka.stream.actor.ActorPublisherMessage.{Request, Cancel}
-import akka.stream.{ClosedShape, FlowShape, ActorMaterializer, OverflowStrategy}
 import akka.stream.actor.ActorPublisher
 import akka.stream.scaladsl._
 import hulk.HulkHttpServer
-import hulk.http.response.Text
 import hulk.http._
 import hulk.http.ws.DefaultWebSocketSenderActor
-import hulk.routing.{*, RouteDef, Router}
-
-import scala.collection.mutable
-import scala.concurrent.ExecutionContext.Implicits.global
-import scalaz.concurrent.Future
+import hulk.routing.{RouteDef, Router}
 
 /**
   * Created by reweber on 24/02/2016
