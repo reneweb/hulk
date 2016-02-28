@@ -11,6 +11,7 @@ Features include:
 
 - Basics (Routing, Filtering, Controller Actions)
 - Simple templating engine (using Mustache)
+- WebSocket support
 - Rate limiting
 - Versioning
 - Swagger
@@ -21,7 +22,6 @@ Features yet to come:
 - HAL/ Json LD support
 - Performance Testing support
 - OAuth client/server
-- Websocket support
 
 ## Getting started ##
 
