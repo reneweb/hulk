@@ -1,7 +1,7 @@
 package hulk.server
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.ws.UpgradeToWebsocket
+import akka.http.scaladsl.model.ws.UpgradeToWebSocket
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
@@ -70,7 +70,7 @@ class RequestHandler(router: Router, routes: Map[RouteDefWithRegex, Action], fil
     def runActionForWs(versionOpt: Option[String], action: WebSocketAction) = {
       val response = versionOpt.fold(action.run())(version => action.run(version))
 
-      rawHttpRequest.header[UpgradeToWebsocket] match {
+      rawHttpRequest.header[UpgradeToWebSocket] match {
         case  Some(upgrade) =>
           response.map { case (sender, receiver) =>
             HulkHttpResponse.fromAkkaHttpResponse(upgrade.handleMessagesWithSinkSource(Sink.foreach(receiver), sender))
