@@ -52,7 +52,10 @@ class RequestHandler(router: Router, routes: Map[RouteDefWithRegex, Action], fil
 
     outgoingFilterResults
       .foldLeft(response) { case (resp, filterResult) => resp.flatMap(filterResult) }
-      .map(toAkkaHttpResponse => toAkkaHttpResponse)
+      .map(toAkkaHttpResponse => toAkkaHttpResponse.rawHttpResponse match {
+        case Some(rawResponse) => rawResponse
+        case _ => toAkkaHttpResponse
+      })
   }
 
   private def runActionIfMatch(versionOpt: Option[String], matchedRoute: Option[(RouteDefWithRegex, Action)],
