@@ -18,6 +18,8 @@ trait HulkHttpResponse {
   val statusCode: StatusCode
   val httpHeader: Seq[HttpHeader]
   val body: HttpResponseBody
+
+  val rawHttpResponse: Option[HttpResponse]
 }
 
 object HulkHttpResponse {
@@ -31,14 +33,15 @@ object HulkHttpResponse {
 
     val httpResponseBody = body.map(new HttpResponseBody(contentType, _))
     val response = httpResponseBody.map(body =>
-      Response(httpResponse.status, body, httpResponse.headers)
+      Response(httpResponse.status, body, httpResponse.headers, Some(httpResponse))
     )
 
     response
   }
 }
 
-private case class Response(statusCode: StatusCode, body: HttpResponseBody, httpHeader: Seq[HttpHeader]) extends HulkHttpResponse
+private case class Response(statusCode: StatusCode, body: HttpResponseBody,
+                            httpHeader: Seq[HttpHeader], rawHttpResponse: Option[HttpResponse] = None) extends HulkHttpResponse
 
 protected trait Empty extends ResponseFormat
 protected class EmptyHttpResponseWriter extends HttpResponseBodyWriter[Empty] {
