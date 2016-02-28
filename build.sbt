@@ -54,7 +54,8 @@ lazy val framework = project
     "com.typesafe.play" % "play-json_2.11" % "2.5.0-M1",
     "org.scala-lang.modules" % "scala-xml_2.11" % "1.0.5",
 
-    "org.specs2" % "specs2_2.11" % "3.7"
+    "org.specs2" % "specs2_2.11" % "3.7" % "test",
+    "com.typesafe.akka" % "akka-stream-testkit-experimental_2.11" % "2.0.3" % "test"
   ))
 
 lazy val examples = project
