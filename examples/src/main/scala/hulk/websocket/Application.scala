@@ -2,6 +2,7 @@ package hulk.websocket
 
 import akka.actor._
 import akka.http.scaladsl.model.HttpMethods
+import akka.http.scaladsl.model.ws.TextMessage
 import akka.stream.actor.ActorPublisher
 import akka.stream.scaladsl._
 import hulk.HulkHttpServer
@@ -31,7 +32,8 @@ class SimpleController() {
   val senderActor = system.actorOf(Props(classOf[DefaultWebSocketSenderActor], None))
 
 
-  def testGet = WebSocketAction(Source.fromPublisher(ActorPublisher(senderActor)), msg => {
-    senderActor ! msg
-  })
+  def testGet = WebSocketAction(Source.fromPublisher(ActorPublisher(senderActor)), { msg => msg match {
+    case TextMessage.Strict(txt) => senderActor ! TextMessage.Strict(s"Response: $txt")
+    case _ => //ignore
+  }})
 }
