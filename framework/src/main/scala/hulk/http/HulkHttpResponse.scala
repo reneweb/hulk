@@ -19,7 +19,7 @@ trait HulkHttpResponse {
   val httpHeader: Seq[HttpHeader]
   val body: HttpResponseBody
 
-  val rawHttpResponse: Option[HttpResponse]
+  private[hulk] val rawHttpResponse: Option[HttpResponse]
 }
 
 object HulkHttpResponse {
