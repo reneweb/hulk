@@ -31,7 +31,7 @@ Hulk is distributed via jcenter. Make sure that it is available as a resolver in
 Then add the dependency to your build:
 
 ```scala
-libraryDependencies ++= Seq ("io.github.reneweb" % "hulk-framework_2.11" % "0.1.1")
+libraryDependencies ++= Seq ("io.github.reneweb" % "hulk-framework_2.11" % "0.2.0")
 ```
 
 ### Simple usage example ###
