@@ -50,6 +50,7 @@ lazy val framework = project
     "net.sf.ehcache" % "ehcache" % "2.10.1",
     "org.spire-math" % "cats-core_2.11" % "0.3.0",
     "com.github.spullara.mustache.java" % "compiler" % "0.9.1",
+    "com.nulab-inc" %% "scala-oauth2-core" % "0.16.1",
 
     "com.typesafe.play" % "play-json_2.11" % "2.5.0-M1",
     "org.scala-lang.modules" % "scala-xml_2.11" % "1.0.5",
