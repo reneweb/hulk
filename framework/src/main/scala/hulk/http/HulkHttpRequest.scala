@@ -12,4 +12,4 @@ import hulk.http.request.HttpRequestBody
 case class HulkHttpRequest(method: HttpMethod, path: String, httpHeader: Seq[HttpHeader], body: HttpRequestBody)
                           (val requestParams: Map[String, String], val queryParams: Query, val fragment: Option[String])
                           (val cookies: Seq[HttpCookiePair])
-                          (implicit private val actorMaterializer: ActorMaterializer)
+                          (implicit private[hulk] val actorMaterializer: ActorMaterializer)

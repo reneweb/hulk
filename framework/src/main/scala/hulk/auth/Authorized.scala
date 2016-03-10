@@ -19,7 +19,11 @@ class Authorized[T](dataHandler: ProtectedResourceHandler[T]) {
         val authResultFuture = ProtectedResource.handleRequest(protectedResourceRequest, dataHandler)
         authResultFuture.flatMap { authResult => authResult.fold(
           err => Future.successful(Forbidden()),
-          success => f(request)
+          success => f(new AuthorizedHttpRequest(request.method, request.path, request.httpHeader, request.body)
+                                                (request.requestParams, request.queryParams, request.fragment)
+                                                (request.cookies)
+                                                (success.user)
+                                                (request.actorMaterializer))
         )}
       }.getOrElse(Future.successful(Forbidden()))
   }
