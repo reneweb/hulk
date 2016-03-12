@@ -8,7 +8,7 @@ import scalaoauth2.provider._
 /**
   * Created by reweber on 06/03/2016
   */
-class OAuthClientFlow[T](oAuthClientFlowData: OAuthClientFlowData, dataHandler: AuthorizationHandler[T]) {
+case class OAuthClientFlow[T](oAuthClientFlowData: OAuthClientFlowData, dataHandler: AuthorizationHandler[T]) {
 
   private val headerMap = Map("Authorization" -> Seq(oAuthClientFlowData.authorization.value()))
   private val paramMap = Map("grant_type" -> Seq(oAuthClientFlowData.grantType)) ++

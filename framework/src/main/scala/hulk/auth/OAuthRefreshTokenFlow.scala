@@ -8,7 +8,7 @@ import scalaoauth2.provider._
 /**
   * Created by reweber on 06/03/2016
   */
-class OAuthRefreshTokenFlow[T](oAuthRefreshTokenFlowData: OAuthRefreshTokenFlowData, dataHandler: AuthorizationHandler[T]) {
+case class OAuthRefreshTokenFlow[T](oAuthRefreshTokenFlowData: OAuthRefreshTokenFlowData, dataHandler: AuthorizationHandler[T]) {
 
   private val headerMap = Map("Authorization" -> Seq(oAuthRefreshTokenFlowData.authorization.value()))
   private val paramMap = Map("grant_type" -> Seq(oAuthRefreshTokenFlowData.grantType), "refresh_token" -> Seq(oAuthRefreshTokenFlowData.refreshToken))
