@@ -1,6 +1,7 @@
 package hulk.auth
 
 import akka.http.scaladsl.model.HttpHeader
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import scalaoauth2.provider._
 
@@ -9,7 +10,7 @@ import scalaoauth2.provider._
   */
 class OAuthImplicitFlow[T](oAuthImplicitFlowData: OAuthImplicitFlowData, dataHandler: AuthorizationHandler[T]) {
 
-  val headerMap = Map("Authorization", Seq(oAuthImplicitFlowData.authorization.value()))
+  val headerMap = Map("Authorization" -> Seq(oAuthImplicitFlowData.authorization.value()))
   val paramMap = Map("grant_type" -> Seq(oAuthImplicitFlowData.grantType)) ++
     oAuthImplicitFlowData.scope.map(s => Map("scope" -> Seq(s))).getOrElse(Map.empty)
 
