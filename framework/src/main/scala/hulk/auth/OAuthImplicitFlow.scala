@@ -10,12 +10,13 @@ import scalaoauth2.provider._
   */
 class OAuthImplicitFlow[T](oAuthImplicitFlowData: OAuthImplicitFlowData, dataHandler: AuthorizationHandler[T]) {
 
-  val headerMap = Map("Authorization" -> Seq(oAuthImplicitFlowData.authorization.value()))
-  val paramMap = Map("grant_type" -> Seq(oAuthImplicitFlowData.grantType)) ++
+  private val headerMap = Map("Authorization" -> Seq(oAuthImplicitFlowData.authorization.value()))
+  private val paramMap = Map("grant_type" -> Seq(oAuthImplicitFlowData.grantType)) ++
     oAuthImplicitFlowData.scope.map(s => Map("scope" -> Seq(s))).getOrElse(Map.empty)
 
-  val implicitRequest = new ImplicitRequest(new AuthorizationRequest(headerMap, paramMap))
-  new Implicit().handleRequest(implicitRequest, dataHandler)
+  private val implicitRequest = new ImplicitRequest(new AuthorizationRequest(headerMap, paramMap))
+
+  def run = new Implicit().handleRequest(implicitRequest, dataHandler)
 }
 
 case class OAuthImplicitFlowData(authorization: HttpHeader, grantType: String, scope: Option[String])

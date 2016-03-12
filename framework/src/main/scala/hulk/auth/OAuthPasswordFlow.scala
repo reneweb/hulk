@@ -10,14 +10,15 @@ import scalaoauth2.provider._
   */
 class OAuthPasswordFlow[T](oAuthPasswordFlowData: OAuthPasswordFlowData, dataHandler: AuthorizationHandler[T]) {
 
-  val headerMap = Map("Authorization" -> Seq(oAuthPasswordFlowData.authorization.value()))
-  val paramMap = Map("grant_type" -> Seq(oAuthPasswordFlowData.grantType),
+  private val headerMap = Map("Authorization" -> Seq(oAuthPasswordFlowData.authorization.value()))
+  private val paramMap = Map("grant_type" -> Seq(oAuthPasswordFlowData.grantType),
                      "username" -> Seq(oAuthPasswordFlowData.username),
                      "password" -> Seq(oAuthPasswordFlowData.password)) ++
     oAuthPasswordFlowData.scope.map(s => Map("scope" -> Seq(s))).getOrElse(Map.empty)
 
-  val passwordRequest = new PasswordRequest(new AuthorizationRequest(headerMap, paramMap))
-  new Password().handleRequest(passwordRequest, dataHandler)
+  private val passwordRequest = new PasswordRequest(new AuthorizationRequest(headerMap, paramMap))
+
+  def run = new Password().handleRequest(passwordRequest, dataHandler)
 }
 
 case class OAuthPasswordFlowData(authorization: HttpHeader, grantType: String, username: String, password: String, scope: Option[String])
