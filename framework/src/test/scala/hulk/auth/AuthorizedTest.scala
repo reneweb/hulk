@@ -17,7 +17,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
   * Created by reweber on 10/03/2016
   */
-class AuthorizedTest  extends Specification with Mockito {
+class AuthorizedTest extends Specification with Mockito {
 
   case class TestUser()
   val accessToken = AccessToken("test", None, None, None, new Date())
