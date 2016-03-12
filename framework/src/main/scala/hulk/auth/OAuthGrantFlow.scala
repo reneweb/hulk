@@ -2,6 +2,7 @@ package hulk.auth
 
 import akka.http.scaladsl.model.HttpHeader
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 import scalaoauth2.provider._
 
@@ -11,7 +12,7 @@ import scalaoauth2.provider._
 class OAuthGrantFlow[T] {
   import OAuthGrantFlow._
 
-  def code(clientId: String, redirectUri: String, generateTokenAndStoreInfo: (ClientId, RedirectUri) => Code) = {
+  def code(clientId: String, redirectUri: String, generateTokenAndStoreInfo: (ClientId, RedirectUri) => Future[Code]) = {
     generateTokenAndStoreInfo(clientId, redirectUri)
   }
 
@@ -32,7 +33,7 @@ object OAuthGrantFlow {
   type RedirectUri = String
   type Code = String
 
-  def code[T](clientId: String, redirectUri: String, generateTokenAndStoreInfo: (ClientId, RedirectUri) => Code) =
+  def code[T](clientId: String, redirectUri: String, generateTokenAndStoreInfo: (ClientId, RedirectUri) => Future[Code]) =
     new OAuthGrantFlow().code(clientId, redirectUri, generateTokenAndStoreInfo)
 
   def token[T](oAuthGrantFlowData: OAuthGrantFlowData, dataHandler: AuthorizationHandler[T]) =
