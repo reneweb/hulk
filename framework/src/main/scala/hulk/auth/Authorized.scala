@@ -4,11 +4,12 @@ import hulk.http.{Forbidden, HulkHttpRequest, HulkHttpResponse}
 
 import scala.concurrent.Future
 import scalaoauth2.provider._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Created by reweber on 06/03/2016
   */
-class Authorized[T](dataHandler: ProtectedResourceHandler[T]) {
+case class Authorized[T](dataHandler: ProtectedResourceHandler[T]) {
 
   def apply(f: HulkHttpRequest => Future[HulkHttpResponse]): HulkHttpRequest => Future[HulkHttpResponse] = {
     case request =>
@@ -38,3 +39,4 @@ class Authorized[T](dataHandler: ProtectedResourceHandler[T]) {
     .filter(_.startsWith("Bearer"))
     .map(_.drop(7))
 }
+
