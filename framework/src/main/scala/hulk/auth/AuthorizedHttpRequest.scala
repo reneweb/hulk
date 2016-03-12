@@ -14,5 +14,5 @@ class AuthorizedHttpRequest[T] (method: HttpMethod, path: String, httpHeader: Se
                                (requestParams: Map[String, String], queryParams: Query, fragment: Option[String])
                                (cookies: Seq[HttpCookiePair])
                                (user: T)
-                               (implicit private val actorMaterializer: ActorMaterializer) extends
+                               (override implicit private[hulk] val actorMaterializer: ActorMaterializer) extends
   HulkHttpRequest(method, path, httpHeader, body)(requestParams, queryParams, fragment)(cookies)(actorMaterializer)
