@@ -14,7 +14,7 @@ import scala.concurrent.Future
 import scalaoauth2.provider.{AccessToken, AuthInfo, AuthorizationHandler, AuthorizationRequest}
 
 /**
-  * Created by reweber on 13/03/2016
+  * See https://tools.ietf.org/html/rfc6749 for more Info
   */
 object OAuthClientFlowApplication extends App {
   val router = new OAuthRouter()

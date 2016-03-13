@@ -14,7 +14,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scalaoauth2.provider.{AccessToken, AuthInfo, AuthorizationRequest, AuthorizationHandler}
 
 /**
-  * Created by reweber on 13/03/2016
+  * See https://tools.ietf.org/html/rfc6749 for more Info
   */
 object OAuthPasswordFlowApplication extends App {
   val router = new OAuthRouter()
