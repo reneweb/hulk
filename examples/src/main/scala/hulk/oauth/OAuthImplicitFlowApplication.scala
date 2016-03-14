@@ -25,6 +25,7 @@ class OAuthRouter() extends Router {
   val oAuthImplicitController = new OAuthImplicitController()
 
   override def router: Map[RouteDef, Action] = Map(
+    (HttpMethods.POST, "/login") -> AsyncAction(), //Login to app
     (HttpMethods.POST, "/token") -> oAuthImplicitController.token,
     (HttpMethods.GET, "/restrictedResource") -> oAuthImplicitController.restrictedResource
   )

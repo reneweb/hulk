@@ -25,6 +25,7 @@ class OAuthGrantRouter() extends Router {
   val oAuthGrantController = new OAuthGrantController()
 
   override def router: Map[RouteDef, Action] = Map(
+    (HttpMethods.POST, "/login") -> AsyncAction(), //Login to app
     (HttpMethods.POST, "/authorization") -> oAuthGrantController.authorization,
     (HttpMethods.POST, "/token") -> oAuthGrantController.token,
     (HttpMethods.GET, "/restrictedResource") -> oAuthGrantController.restrictedResource
