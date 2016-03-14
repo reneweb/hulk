@@ -17,20 +17,20 @@ import scalaoauth2.provider._
   * See https://tools.ietf.org/html/rfc6749 for more Info
   */
 object OAuthClientFlowApplication extends App {
-  val router = new OAuthRouter()
+  val router = new OAuthClientRouter()
   HulkHttpServer(router).run()
 }
 
-class OAuthRouter() extends Router {
-  val simpleController = new SimpleController()
+class OAuthClientRouter() extends Router {
+  val oAuthClientController = new OAuthClientController()
 
   override def router: Map[RouteDef, Action] = Map(
-    (HttpMethods.POST, "/authorization") -> simpleController.authorization,
-    (HttpMethods.GET, "/restrictedResource") -> simpleController.restrictedResource
+    (HttpMethods.POST, "/authorization") -> oAuthClientController.authorization,
+    (HttpMethods.GET, "/restrictedResource") -> oAuthClientController.restrictedResource
   )
 }
 
-class SimpleController() {
+class OAuthClientController() {
   def authorization = AsyncAction { request =>
     val clientAuthHandler = new ClientAuthorizationHandler()
     val clientFlowData = OAuthClientFlowData(request.httpHeader.find(_.name() == "Authorization").get, "client_credentials", None)
@@ -43,9 +43,9 @@ class SimpleController() {
     })
   }
 
-  val exampleProtectedResourceHandler = new ExampleProtectedResourceHandler()
+  val oAuthClientProtectedResourceHandler = new OAuthClientProtectedResourceHandler()
 
-  def restrictedResource = AsyncAction { Authorized(exampleProtectedResourceHandler) { request =>
+  def restrictedResource = AsyncAction { Authorized(oAuthClientProtectedResourceHandler) { request =>
     Future.successful(Ok())
   }}
 }
@@ -72,12 +72,10 @@ class ClientAuthorizationHandler extends AuthorizationHandler[TestUser] {
   override def deleteAuthCode(code: String): Future[Unit] = Future.successful()
 }
 
-class ExampleProtectedResourceHandler extends ProtectedResourceHandler[TestUser] {
+class OAuthClientProtectedResourceHandler extends ProtectedResourceHandler[TestUser] {
   override def findAuthInfoByAccessToken(accessToken: AccessToken): Future[Option[AuthInfo[TestUser]]] =
     Future.successful(Some(AuthInfo(TestUser(), Some("clientId"), None, None)))
 
   override def findAccessToken(token: String): Future[Option[AccessToken]] =
     Future(Some(AccessToken("accessToken", None, None, None, new Date())))
 }
-
-case class TestUser()

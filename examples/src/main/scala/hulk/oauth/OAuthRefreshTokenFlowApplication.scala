@@ -17,11 +17,11 @@ import scalaoauth2.provider._
   * See https://tools.ietf.org/html/rfc6749 for more Info
   */
 object OAuthRefreshTokenFlowApplication extends App {
-  val router = new OAuthRouter()
+  val router = new OAuthRefreshTokenRouter()
   HulkHttpServer(router).run()
 }
 
-class OAuthRouter() extends Router {
+class OAuthRefreshTokenRouter() extends Router {
   val oAuthRefreshTokenController = new OAuthRefreshTokenController()
 
   override def router: Map[RouteDef, Action] = Map(
@@ -32,7 +32,7 @@ class OAuthRouter() extends Router {
 
 class OAuthRefreshTokenController() {
   def token = AsyncAction { request =>
-    val refreshTokenAuthHandler = new RefreshTokenAuthorizationHandler()
+    val refreshTokenAuthHandler = new OAuthRefreshTokenAuthorizationHandler()
     val refreshTokenFlowData = OAuthRefreshTokenFlowData(request.httpHeader.find(_.name() == "Authorization").get, "refresh_token", "refreshToken")
 
     val grantResultFuture = OAuthRefreshTokenFlow(refreshTokenFlowData, refreshTokenAuthHandler).run
@@ -43,14 +43,14 @@ class OAuthRefreshTokenController() {
     })
   }
 
-  val exampleProtectedResourceHandler = new ExampleProtectedResourceHandler()
+  val oAuthRefreshTokenProtectedResourceHandler = new OAuthGrantProtectedResourceHandler()
 
-  def restrictedResource = AsyncAction { Authorized(exampleProtectedResourceHandler) { request =>
+  def restrictedResource = AsyncAction { Authorized(oAuthRefreshTokenProtectedResourceHandler) { request =>
     Future.successful(Ok())
   }}
 }
 
-class RefreshTokenAuthorizationHandler extends AuthorizationHandler[TestUser] {
+class OAuthRefreshTokenAuthorizationHandler extends AuthorizationHandler[TestUser] {
   //These functions should properly validate the input and store / retrieve the data from a db
   override def validateClient(request: AuthorizationRequest): Future[Boolean] = Future.successful(true)
   override def createAccessToken(authInfo: AuthInfo[TestUser]): Future[AccessToken] =
@@ -72,12 +72,10 @@ class RefreshTokenAuthorizationHandler extends AuthorizationHandler[TestUser] {
   override def deleteAuthCode(code: String): Future[Unit] = Future.successful()
 }
 
-class ExampleProtectedResourceHandler extends ProtectedResourceHandler[TestUser] {
+class OAuthRefreshTokenProtectedResourceHandler extends ProtectedResourceHandler[TestUser] {
   override def findAuthInfoByAccessToken(accessToken: AccessToken): Future[Option[AuthInfo[TestUser]]] =
     Future.successful(Some(AuthInfo(TestUser(), Some("clientId"), None, None)))
 
   override def findAccessToken(token: String): Future[Option[AccessToken]] =
     Future(Some(AccessToken("accessToken", None, None, None, new Date())))
 }
-
-case class TestUser()
