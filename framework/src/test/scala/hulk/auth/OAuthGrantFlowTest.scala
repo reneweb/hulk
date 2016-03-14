@@ -28,9 +28,9 @@ class OAuthGrantFlowTest extends Specification with Mockito {
       val clientId = "clientId"
       val redirectUri = "redirectUri"
       val code = "someCode"
-      val generateTokenAndStoreInfo = (clientId: String, redirectUri: String) => Future.successful(code)
+      val generateTokenAndStoreInfo = (clientId: String, redirectUri: Option[String]) => Future.successful(code)
 
-      val codeResultFuture = OAuthGrantFlow.code(clientId, redirectUri, generateTokenAndStoreInfo)
+      val codeResultFuture = OAuthGrantFlow.code(clientId, Some(redirectUri), generateTokenAndStoreInfo)
       val codeResult = Await.result(codeResultFuture, 5 seconds)
 
       codeResult must equalTo(code)
@@ -39,7 +39,7 @@ class OAuthGrantFlowTest extends Specification with Mockito {
 
   "OAuthGrantFlow#grant" should {
     "return grant result if authorization and grant type is valid" >> {
-      val oAuthGrantFlowData = OAuthGrantFlowData(authHttpHeader, "authorization_code", "authCode", "redirectUri", None)
+      val oAuthGrantFlowData = OAuthGrantFlowData(authHttpHeader, "authorization_code", "authCode", Some("redirectUri"), None)
 
       val grantResultFuture = OAuthGrantFlow.token(oAuthGrantFlowData, getMockedDataHandler)
       val grantResult = Await.result(grantResultFuture, 5 seconds)
@@ -49,7 +49,7 @@ class OAuthGrantFlowTest extends Specification with Mockito {
       grantResult.accessToken must equalTo("accessToken")
     }
     "return grant result if authorization and grant type and scope is valid" >> {
-      val oAuthGrantFlowData = OAuthGrantFlowData(authHttpHeader, "authorization_code", "authCode", "redirectUri", Some("testScope"))
+      val oAuthGrantFlowData = OAuthGrantFlowData(authHttpHeader, "authorization_code", "authCode", Some("redirectUri"), Some("testScope"))
 
       val grantResultFuture = OAuthGrantFlow.token(oAuthGrantFlowData, getMockedDataHandlerWithScope("testScope"))
       val grantResult = Await.result(grantResultFuture, 5 seconds)
@@ -64,7 +64,7 @@ class OAuthGrantFlowTest extends Specification with Mockito {
       wrongHeader.name returns "Authorization"
       wrongHeader.value() returns s"Basic ${new String(Base64.encodeBase64("wrongWrong:testSecret".getBytes))}"
 
-      val oAuthGrantFlowData = OAuthGrantFlowData(wrongHeader, "authorization_code", "authCode", "redirectUri", None)
+      val oAuthGrantFlowData = OAuthGrantFlowData(wrongHeader, "authorization_code", "authCode", Some("redirectUri"), None)
 
       val grantResultFuture = OAuthGrantFlow.token(oAuthGrantFlowData, getMockedDataHandler)
       Await.result(grantResultFuture, 5 seconds) must throwAn[InvalidClient]
