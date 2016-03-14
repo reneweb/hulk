@@ -4,14 +4,14 @@ import java.util.Date
 
 import akka.http.scaladsl.model.HttpMethods
 import hulk.HulkHttpServer
-import hulk.auth.{OAuthClientFlow, OAuthClientFlowData}
+import hulk.auth.{Authorized, OAuthClientFlow, OAuthClientFlowData}
 import hulk.http._
 import hulk.routing.{RouteDef, Router}
 import play.api.libs.json.Json
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scalaoauth2.provider.{AccessToken, AuthInfo, AuthorizationHandler, AuthorizationRequest}
+import scalaoauth2.provider._
 
 /**
   * See https://tools.ietf.org/html/rfc6749 for more Info
@@ -43,12 +43,11 @@ class SimpleController() {
     })
   }
 
-  def restrictedResource = AsyncAction { request =>
-    println(request.requestParams.mkString(";"))
-    request.body.asJson().map { jsonOpt =>
-      jsonOpt.map(Ok(_)).getOrElse(BadRequest())
-    }
-  }
+  val exampleProtectedResourceHandler = new ExampleProtectedResourceHandler()
+
+  def restrictedResource = AsyncAction { Authorized(exampleProtectedResourceHandler) { request =>
+    Future.successful(Ok())
+  }}
 }
 
 class ClientAuthorizationHandler extends AuthorizationHandler[TestUser] {
@@ -71,6 +70,14 @@ class ClientAuthorizationHandler extends AuthorizationHandler[TestUser] {
 
   override def findUser(request: AuthorizationRequest): Future[Option[TestUser]] = Future.successful(Some(TestUser()))
   override def deleteAuthCode(code: String): Future[Unit] = Future.successful()
+}
+
+class ExampleProtectedResourceHandler extends ProtectedResourceHandler[TestUser] {
+  override def findAuthInfoByAccessToken(accessToken: AccessToken): Future[Option[AuthInfo[TestUser]]] =
+    Future.successful(Some(AuthInfo(TestUser(), Some("clientId"), None, None)))
+
+  override def findAccessToken(token: String): Future[Option[AccessToken]] =
+    Future(Some(AccessToken("accessToken", None, None, None, new Date())))
 }
 
 case class TestUser()
