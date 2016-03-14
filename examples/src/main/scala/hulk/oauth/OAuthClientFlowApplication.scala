@@ -52,14 +52,25 @@ class SimpleController() {
 }
 
 class ClientAuthorizationHandler extends AuthorizationHandler[TestUser] {
-  override def validateClient(request: AuthorizationRequest): Future[Boolean] = ???
-  override def createAccessToken(authInfo: AuthInfo[TestUser]): Future[AccessToken] = ???
-  override def refreshAccessToken(authInfo: AuthInfo[TestUser], refreshToken: String): Future[AccessToken] = ???
-  override def findAuthInfoByRefreshToken(refreshToken: String): Future[Option[AuthInfo[TestUser]]] = ???
-  override def getStoredAccessToken(authInfo: AuthInfo[TestUser]): Future[Option[AccessToken]] = Future(Some(AccessToken("accessToken", None, None, None, new Date())))
-  override def findAuthInfoByCode(code: String): Future[Option[AuthInfo[TestUser]]] = ???
+  //These functions should properly validate the input and store / retrieve the data from a db
+  override def validateClient(request: AuthorizationRequest): Future[Boolean] = Future.successful(true)
+  override def createAccessToken(authInfo: AuthInfo[TestUser]): Future[AccessToken] =
+    Future.successful(AccessToken("accessToken", None, None, None, new Date()))
+
+  override def refreshAccessToken(authInfo: AuthInfo[TestUser], refreshToken: String): Future[AccessToken] =
+    Future.successful(AccessToken("accessToken", None, None, None, new Date()))
+
+  override def findAuthInfoByRefreshToken(refreshToken: String): Future[Option[AuthInfo[TestUser]]] =
+    Future.successful(Some(AuthInfo(TestUser(), Some("clientId"), None, None)))
+
+  override def getStoredAccessToken(authInfo: AuthInfo[TestUser]): Future[Option[AccessToken]] =
+    Future(Some(AccessToken("accessToken", None, None, None, new Date())))
+
+  override def findAuthInfoByCode(code: String): Future[Option[AuthInfo[TestUser]]] =
+    Future.successful(Some(AuthInfo(TestUser(), Some("clientId"), None, None)))
+
   override def findUser(request: AuthorizationRequest): Future[Option[TestUser]] = Future.successful(Some(TestUser()))
-  override def deleteAuthCode(code: String): Future[Unit] = ???
+  override def deleteAuthCode(code: String): Future[Unit] = Future.successful()
 }
 
 case class TestUser()
