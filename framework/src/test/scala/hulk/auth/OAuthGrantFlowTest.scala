@@ -27,10 +27,11 @@ class OAuthGrantFlowTest extends Specification with Mockito {
     "proxy to passed generateTokenAndStoreInfo function" >> {
       val clientId = "clientId"
       val redirectUri = "redirectUri"
+      val responseType = "code"
       val code = "someCode"
-      val generateTokenAndStoreInfo = (clientId: String, redirectUri: Option[String]) => Future.successful(code)
+      val generateTokenAndStoreInfo = (clientId: String, responseType: String, redirectUri: Option[String]) => Future.successful(code)
 
-      val codeResultFuture = OAuthGrantFlow.code(clientId, Some(redirectUri), generateTokenAndStoreInfo)
+      val codeResultFuture = OAuthGrantFlow.code(clientId, responseType, Some(redirectUri), generateTokenAndStoreInfo)
       val codeResult = Await.result(codeResultFuture, 5 seconds)
 
       codeResult must equalTo(code)

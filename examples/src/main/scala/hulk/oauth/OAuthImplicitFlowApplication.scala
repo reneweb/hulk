@@ -34,7 +34,7 @@ class OAuthRouter() extends Router {
 class OAuthImplicitController() {
   def token = AsyncAction { request =>
     val implicitAuthHandler = new OAuthImplicitAuthorizationHandler()
-    val implicitFlowData = OAuthImplicitFlowData(request.httpHeader.find(_.name() == "Authorization").get, "implicit", None)
+    val implicitFlowData = OAuthImplicitFlowData(request.httpHeader.find(_.name() == "Authorization").get, "token", None)
 
     val grantResultFuture = OAuthImplicitFlow(implicitFlowData, implicitAuthHandler).run
     grantResultFuture.map(grantResult => {
