@@ -12,8 +12,15 @@ import scalaoauth2.provider._
 class OAuthGrantFlow[T] {
   import OAuthGrantFlow._
 
-  def code(clientId: String, redirectUri: Option[String], generateTokenAndStoreInfo: (ClientId, Option[RedirectUri]) => Future[Code]) = {
-    generateTokenAndStoreInfo(clientId, redirectUri)
+  def code(clientId: String,
+           responseType: String,
+           redirectUri: Option[String],
+           generateTokenAndStoreInfo: (ClientId, ResponseType, Option[RedirectUri]) => Future[Code]) = {
+    if(responseType != "code") {
+      Future.failed(new InvalidGrant())
+    } else {
+      generateTokenAndStoreInfo(clientId, responseType, redirectUri)
+    }
   }
 
   def token(oAuthGrantFlowData: OAuthGrantFlowData, dataHandler: AuthorizationHandler[T]) = {
@@ -31,11 +38,15 @@ class OAuthGrantFlow[T] {
 object OAuthGrantFlow {
 
   type ClientId = String
+  type ResponseType = String
   type RedirectUri = String
   type Code = String
 
-  def code[T](clientId: String, redirectUri: Option[String], generateTokenAndStoreInfo: (ClientId, Option[RedirectUri]) => Future[Code]) =
-    new OAuthGrantFlow().code(clientId, redirectUri, generateTokenAndStoreInfo)
+  def code[T](clientId: String,
+              responseType: String,
+              redirectUri: Option[String],
+              generateTokenAndStoreInfo: (ClientId, ResponseType, Option[RedirectUri]) => Future[Code]) =
+    new OAuthGrantFlow().code(clientId, responseType, redirectUri, generateTokenAndStoreInfo)
 
   def token[T](oAuthGrantFlowData: OAuthGrantFlowData, dataHandler: AuthorizationHandler[T]) =
     new OAuthGrantFlow().token(oAuthGrantFlowData, dataHandler)

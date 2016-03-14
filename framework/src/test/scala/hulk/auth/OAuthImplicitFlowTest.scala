@@ -25,7 +25,7 @@ class OAuthImplicitFlowTest extends Specification with Mockito {
 
   "OAuthImplicitFlow#apply" should {
     "return grant result if authorization and grant type is valid" >> {
-      val oAuthImplicitFlowData = OAuthImplicitFlowData(authHttpHeader, "implicit", None)
+      val oAuthImplicitFlowData = OAuthImplicitFlowData(authHttpHeader, "token", None)
 
       val grantResultFuture = OAuthImplicitFlow(oAuthImplicitFlowData, getMockedDataHandler).run
       val grantResult = Await.result(grantResultFuture, 5 seconds)
@@ -35,7 +35,7 @@ class OAuthImplicitFlowTest extends Specification with Mockito {
       grantResult.accessToken must equalTo("accessToken")
     }
     "return grant result if authorization and grant type and scope is valid" >> {
-      val oAuthImplicitFlowData = OAuthImplicitFlowData(authHttpHeader, "implicit", Some("testScope"))
+      val oAuthImplicitFlowData = OAuthImplicitFlowData(authHttpHeader, "token", Some("testScope"))
 
       val grantResultFuture = OAuthImplicitFlow(oAuthImplicitFlowData, getMockedDataHandlerWithScope("testScope")).run
       val grantResult = Await.result(grantResultFuture, 5 seconds)
@@ -50,13 +50,13 @@ class OAuthImplicitFlowTest extends Specification with Mockito {
       wrongHeader.name returns "Authorization"
       wrongHeader.value() returns s"Basic ${new String(Base64.encodeBase64("wrongWrong:testSecret".getBytes))}"
 
-      val oAuthImplicitFlowData = OAuthImplicitFlowData(wrongHeader, "client_credentials", None)
+      val oAuthImplicitFlowData = OAuthImplicitFlowData(wrongHeader, "token", None)
 
       val grantResultFuture = OAuthImplicitFlow(oAuthImplicitFlowData, getMockedDataHandler).run
       Await.result(grantResultFuture, 5 seconds) must throwAn[InvalidGrant]
     }
-    "return error if grant type is invalid" >> {
-      val oAuthImplicitFlowData = OAuthImplicitFlowData(authHttpHeader, "wrong_grant", None)
+    "return error if response type is invalid" >> {
+      val oAuthImplicitFlowData = OAuthImplicitFlowData(authHttpHeader, "wrongResponseType", None)
 
       val grantResultFuture = OAuthImplicitFlow(oAuthImplicitFlowData, getMockedDataHandler).run
       Await.result(grantResultFuture, 5 seconds) must throwAn[InvalidGrant]
@@ -67,7 +67,7 @@ class OAuthImplicitFlowTest extends Specification with Mockito {
     val dataHandler = mock[DataHandler[TestUser]]
     dataHandler.findUser(any[ClientCredentialsRequest]) answers {
       request => request match {
-        case r: ImplicitRequest if r.request.scope.isDefined && r.request.scope.get == scope && r.request.grantType == "implicit" &&
+        case r: ImplicitRequest if r.request.scope.isDefined && r.request.scope.get == scope &&
           r.clientCredential.isDefined && r.clientCredential.get.clientId == "testClient" =>
           Future(Some(TestUser()))
         case _ => Future(None)
@@ -82,7 +82,7 @@ class OAuthImplicitFlowTest extends Specification with Mockito {
     val dataHandler = mock[DataHandler[TestUser]]
     dataHandler.findUser(any[ImplicitRequest]) answers {
       request => request match {
-        case r: ImplicitRequest if r.request.grantType == "implicit" && r.clientCredential.isDefined && r.clientCredential.get.clientId == "testClient" =>
+        case r: ImplicitRequest if r.clientCredential.isDefined && r.clientCredential.get.clientId == "testClient" =>
           Future(Some(TestUser()))
         case _ => Future(None)
       }

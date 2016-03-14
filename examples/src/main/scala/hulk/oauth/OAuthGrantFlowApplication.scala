@@ -36,8 +36,8 @@ class OAuthGrantController() {
   def authorization = AsyncAction { request =>
     request.body.asJson().flatMap { jsOpt =>
       val json = jsOpt.getOrElse(throw new IllegalArgumentException())
-      val f = (clientId: String, redirectUri: Option[String]) => Future.successful("code")
-      val codeFuture = OAuthGrantFlow.code((json \ "clientId").as[String], (json \ "redirectUri").asOpt[String], f)
+      val f = (clientId: String, responseType: String, redirectUri: Option[String]) => Future.successful("code")
+      val codeFuture = OAuthGrantFlow.code((json \ "clientId").as[String], (json \ "responseType").as[String], (json \ "redirectUri").asOpt[String], f)
 
       codeFuture.map(c => Ok(Json.obj("code" -> c)))
     }
