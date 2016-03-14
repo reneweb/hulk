@@ -32,7 +32,7 @@ class OAuthRouter() extends Router {
 
 class OAuthImplicitController() {
   def token = AsyncAction { request =>
-    val implicitAuthHandler = new ImplicitAuthorizationHandler()
+    val implicitAuthHandler = new OAuthImplicitAuthorizationHandler()
     val implicitFlowData = OAuthImplicitFlowData(request.httpHeader.find(_.name() == "Authorization").get, "implicit", None)
 
     val grantResultFuture = OAuthImplicitFlow(implicitFlowData, implicitAuthHandler).run
@@ -43,14 +43,14 @@ class OAuthImplicitController() {
     })
   }
 
-  val exampleProtectedResourceHandler = new ExampleProtectedResourceHandler()
+  val oAuthImplicitProtectedResourceHandler = new OAuthGrantProtectedResourceHandler()
 
-  def restrictedResource = AsyncAction { Authorized(exampleProtectedResourceHandler) { request =>
+  def restrictedResource = AsyncAction { Authorized(oAuthImplicitProtectedResourceHandler) { request =>
     Future.successful(Ok())
   }}
 }
 
-class ImplicitAuthorizationHandler extends AuthorizationHandler[TestUser] {
+class OAuthImplicitAuthorizationHandler extends AuthorizationHandler[TestUser] {
   //These functions should properly validate the input and store / retrieve the data from a db
   override def validateClient(request: AuthorizationRequest): Future[Boolean] = Future.successful(true)
   override def createAccessToken(authInfo: AuthInfo[TestUser]): Future[AccessToken] =
@@ -72,12 +72,10 @@ class ImplicitAuthorizationHandler extends AuthorizationHandler[TestUser] {
   override def deleteAuthCode(code: String): Future[Unit] = Future.successful()
 }
 
-class ExampleProtectedResourceHandler extends ProtectedResourceHandler[TestUser] {
+class OAuthImplicitProtectedResourceHandler extends ProtectedResourceHandler[TestUser] {
   override def findAuthInfoByAccessToken(accessToken: AccessToken): Future[Option[AuthInfo[TestUser]]] =
     Future.successful(Some(AuthInfo(TestUser(), Some("clientId"), None, None)))
 
   override def findAccessToken(token: String): Future[Option[AccessToken]] =
     Future(Some(AccessToken("accessToken", None, None, None, new Date())))
 }
-
-case class TestUser()

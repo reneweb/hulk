@@ -17,11 +17,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * See https://tools.ietf.org/html/rfc6749 for more Info
   */
 object OAuthGrantFlowApplication extends App {
-  val router = new OAuthRouter()
+  val router = new OAuthGrantRouter()
   HulkHttpServer(router).run()
 }
 
-class OAuthRouter() extends Router {
+class OAuthGrantRouter() extends Router {
   val oAuthGrantController = new OAuthGrantController()
 
   override def router: Map[RouteDef, Action] = Map(
@@ -54,9 +54,9 @@ class OAuthGrantController() {
     })
   }
 
-  val exampleProtectedResourceHandler = new ExampleProtectedResourceHandler()
+  val oAuthGrantProtectedResourceHandler = new OAuthGrantProtectedResourceHandler()
 
-  def restrictedResource = AsyncAction { Authorized(exampleProtectedResourceHandler) { request =>
+  def restrictedResource = AsyncAction { Authorized(oAuthGrantProtectedResourceHandler) { request =>
     Future.successful(Ok())
   }}
 }
@@ -83,12 +83,10 @@ class GrantAuthorizationHandler extends AuthorizationHandler[TestUser] {
   override def deleteAuthCode(code: String): Future[Unit] = Future.successful()
 }
 
-class ExampleProtectedResourceHandler extends ProtectedResourceHandler[TestUser] {
+class OAuthGrantProtectedResourceHandler extends ProtectedResourceHandler[TestUser] {
   override def findAuthInfoByAccessToken(accessToken: AccessToken): Future[Option[AuthInfo[TestUser]]] =
     Future.successful(Some(AuthInfo(TestUser(), Some("clientId"), None, None)))
 
   override def findAccessToken(token: String): Future[Option[AccessToken]] =
     Future(Some(AccessToken("accessToken", None, None, None, new Date())))
 }
-
-case class TestUser()
