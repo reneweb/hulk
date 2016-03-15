@@ -16,12 +16,12 @@ Features include:
 - Versioning
 - Swagger
 - Built in metrics
+- OAuth server
 
 Features yet to come:
 
 - HAL/ Json LD support
 - Performance Testing support
-- OAuth client/server
 
 ## Getting started ##
 
