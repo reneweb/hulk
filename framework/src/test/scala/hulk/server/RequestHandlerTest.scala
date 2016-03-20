@@ -22,7 +22,7 @@ class RequestHandlerTest extends Specification with Mockito {
 
   implicit val actorSystem = ActorSystem()
   implicit val actorMaterializer = ActorMaterializer()
-  val action = Action(request => Ok())
+  val action = Action(request => Future.successful(Ok()))
 
   "RequestHandler#executeRateLimiting" should {
 

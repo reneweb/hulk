@@ -8,6 +8,7 @@ import hulk.http._
 import hulk.routing.{RouteDef, Router}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /**
   * Created by reweber on 11/01/2016
@@ -33,10 +34,10 @@ class SimpleRouter() extends Router {
 class VersionedController() {
   def testGet = Action (
     ("v1", { request =>
-      Ok()
+      Future.successful(Ok())
     }),
     ("v2", { request =>
-      Ok()
+      Future.successful(Ok())
     })
   )
 }

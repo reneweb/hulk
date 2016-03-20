@@ -25,7 +25,7 @@ class OAuthGrantRouter() extends Router {
   val oAuthGrantController = new OAuthGrantController()
 
   override def router: Map[RouteDef, Action] = Map(
-    (HttpMethods.POST, "/login") -> AsyncAction(), //Login to app
+    (HttpMethods.POST, "/login") -> Action(), //Login to app
     (HttpMethods.POST, "/authorization") -> oAuthGrantController.authorization,
     (HttpMethods.POST, "/token") -> oAuthGrantController.token,
     (HttpMethods.GET, "/restrictedResource") -> oAuthGrantController.restrictedResource
@@ -33,7 +33,7 @@ class OAuthGrantRouter() extends Router {
 }
 
 class OAuthGrantController() {
-  def authorization = AsyncAction { request =>
+  def authorization = Action { request =>
     request.body.asJson().flatMap { jsOpt =>
       val json = jsOpt.getOrElse(throw new IllegalArgumentException())
       val f = (clientId: String, responseType: String, redirectUri: Option[String]) => Future.successful("code")
@@ -43,7 +43,7 @@ class OAuthGrantController() {
     }
   }
 
-  def token = AsyncAction { request =>
+  def token = Action { request =>
     val grantAuthHandler = new GrantAuthorizationHandler()
     val grantFlowData = OAuthGrantFlowData(request.httpHeader.find(_.name() == "Authorization").get, "authorization_code", "authCode", Some("redirectUri"), None)
 
@@ -57,7 +57,7 @@ class OAuthGrantController() {
 
   val oAuthGrantProtectedResourceHandler = new OAuthGrantProtectedResourceHandler()
 
-  def restrictedResource = AsyncAction { Authorized(oAuthGrantProtectedResourceHandler) { request =>
+  def restrictedResource = Action { Authorized(oAuthGrantProtectedResourceHandler) { request =>
     Future.successful(Ok())
   }}
 }

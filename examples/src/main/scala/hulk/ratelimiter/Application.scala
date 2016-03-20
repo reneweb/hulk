@@ -34,12 +34,12 @@ class SimpleRouter() extends Router with GlobalRateLimiting {
 }
 
 class RateLimitedController() {
-  def simple = AsyncAction { RateLimiter(RateLimitBy.ip, 5, 2 seconds) { request =>
-    Ok()
+  def simple = Action { RateLimiter(RateLimitBy.ip, 5, 2 seconds) { request =>
+    Future.successful(Ok())
   }}
 
-  def multiple = AsyncAction { AsyncRateLimiter(RateLimitBy.ip, 5, 2 seconds) andThen RateLimiter(RateLimitBy.cookie("session"), 3, 4 seconds) { request =>
-    Ok()
+  def multiple = Action { RateLimiter(RateLimitBy.ip, 5, 2 seconds) andThen RateLimiter(RateLimitBy.cookie("session"), 3, 4 seconds) { request =>
+    Future.successful(Ok())
   }}
 }
 
@@ -68,7 +68,7 @@ class RateLimitedWithCustomCacheController() {
 
   val rateLimiterWithCache = RateLimiter(myRateLimitCache) _
 
-  def testCustom = AsyncAction { rateLimiterWithCache(RateLimitBy.ip, 5, 2 seconds) { request =>
-    Ok()
+  def testCustom = Action { rateLimiterWithCache(RateLimitBy.ip, 5, 2 seconds) { request =>
+    Future.successful(Ok())
   }}
 }

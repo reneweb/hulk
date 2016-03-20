@@ -7,6 +7,7 @@ import hulk.http.response.Text
 import hulk.routing.{*, RouteDef, Router}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /**
   * Created by reweber on 26/12/2015
@@ -30,10 +31,10 @@ class SimpleRouter() extends Router {
 
 class SimpleController() {
   def testGet = Action { request =>
-    Ok()
+    Future.successful(Ok())
   }
 
-  def testPost = AsyncAction { request =>
+  def testPost = Action { request =>
     println(request.requestParams.mkString(";"))
     request.body.asJson().map{ jsonOpt =>
       jsonOpt.map(Ok(_)).getOrElse(BadRequest())
@@ -41,6 +42,6 @@ class SimpleController() {
   }
 
   def testParam = Action { request =>
-    Ok[Text](request.requestParams.mkString(", "))
+    Future.successful(Ok[Text](request.requestParams.mkString(", ")))
   }
 }

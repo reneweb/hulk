@@ -31,7 +31,7 @@ class OAuthClientRouter() extends Router {
 }
 
 class OAuthClientController() {
-  def authorization = AsyncAction { request =>
+  def authorization = Action { request =>
     val clientAuthHandler = new ClientAuthorizationHandler()
     val clientFlowData = OAuthClientFlowData(request.httpHeader.find(_.name() == "Authorization").get, "client_credentials", None)
 
@@ -45,7 +45,7 @@ class OAuthClientController() {
 
   val oAuthClientProtectedResourceHandler = new OAuthClientProtectedResourceHandler()
 
-  def restrictedResource = AsyncAction { Authorized(oAuthClientProtectedResourceHandler) { request =>
+  def restrictedResource = Action { Authorized(oAuthClientProtectedResourceHandler) { request =>
     Future.successful(Ok())
   }}
 }

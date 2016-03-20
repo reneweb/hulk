@@ -31,7 +31,7 @@ class OAuthPasswordRouter() extends Router {
 }
 
 class OAuthPasswordController() {
-  def token = AsyncAction { request =>
+  def token = Action { request =>
     val passwordAuthHandler = new OAuthPasswordAuthorizationHandler()
     val passwordFlowData = OAuthPasswordFlowData(request.httpHeader.find(_.name() == "Authorization").get, "client_credentials", "username", "password", None)
 
@@ -45,7 +45,7 @@ class OAuthPasswordController() {
 
   val oAuthPasswordProtectedResourceHandler = new OAuthGrantProtectedResourceHandler()
 
-  def restrictedResource = AsyncAction { Authorized(oAuthPasswordProtectedResourceHandler) { request =>
+  def restrictedResource = Action { Authorized(oAuthPasswordProtectedResourceHandler) { request =>
     Future.successful(Ok())
   }}
 }

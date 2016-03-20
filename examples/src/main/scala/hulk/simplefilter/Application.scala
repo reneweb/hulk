@@ -59,10 +59,10 @@ class SimpleLogRequestTimeFilter extends Filter {
 
 class SimpleController() {
   def testGet = Action { request =>
-    Ok()
+    Future.successful(Ok())
   }
 
-  def testPost = AsyncAction { request =>
+  def testPost = Action { request =>
     request.body.asJson().map{ jsonOpt =>
       jsonOpt.map(Ok(_)).getOrElse(BadRequest())
     }
