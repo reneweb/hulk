@@ -4,12 +4,12 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model.{HttpMethods, ContentTypes}
 import akka.stream.ActorMaterializer
 import akka.util.ByteString
-import hulk.http.{Ok, Action}
+import hulk.http.{Action, Ok}
 import hulk.http.response.HttpResponseBody
 import hulk.routing.{RouteDef, Router}
 import org.specs2.mutable.Specification
 
-import scala.concurrent.Await
+import scala.concurrent.{Future, Await}
 import scala.concurrent.duration._
 
 /**
@@ -17,7 +17,7 @@ import scala.concurrent.duration._
   */
 class HulkHttpServerTest extends Specification {
 
-  val action = Action(request => Ok())
+  val action = Action(request => Future.successful(Ok()))
 
   "HulkHttpServer#run" should {
     "create http server" >> {

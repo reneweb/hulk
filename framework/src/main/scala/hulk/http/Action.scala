@@ -10,11 +10,6 @@ import scala.concurrent.Future
   */
 trait Action
 
-trait SyncAction {
-  def run(request: HulkHttpRequest): Option[HulkHttpResponse]
-  def run(version: String, request: HulkHttpRequest): Option[HulkHttpResponse]
-}
-
 trait AsyncAction {
   def run(request: HulkHttpRequest): Option[Future[HulkHttpResponse]]
   def run(version: String, request: HulkHttpRequest): Option[Future[HulkHttpResponse]]
@@ -26,20 +21,6 @@ trait WebSocketAction {
 }
 
 object Action {
-  def apply(f: HulkHttpRequest => HulkHttpResponse) = new Action with SyncAction {
-    override def run(request: HulkHttpRequest) = Some(f(request))
-    override def run(version: String, request: HulkHttpRequest) = None
-  }
-
-  def apply(versionedActions: (String, HulkHttpRequest => HulkHttpResponse)*) = new Action with SyncAction {
-    override def run(request: HulkHttpRequest) = None
-    override def run(version: String, request: HulkHttpRequest) = {
-      versionedActions.find(_._1 == version).map(a => a._2(request))
-    }
-  }
-}
-
-object AsyncAction {
   def apply(f: HulkHttpRequest => Future[HulkHttpResponse]) = new Action with AsyncAction {
     override def run(request: HulkHttpRequest) = Some(f(request))
     override def run(version: String, request: HulkHttpRequest) = None

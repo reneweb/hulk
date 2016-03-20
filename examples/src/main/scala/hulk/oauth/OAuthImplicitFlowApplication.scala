@@ -25,14 +25,14 @@ class OAuthRouter() extends Router {
   val oAuthImplicitController = new OAuthImplicitController()
 
   override def router: Map[RouteDef, Action] = Map(
-    (HttpMethods.POST, "/login") -> AsyncAction(), //Login to app
+    (HttpMethods.POST, "/login") -> Action(), //Login to app
     (HttpMethods.POST, "/token") -> oAuthImplicitController.token,
     (HttpMethods.GET, "/restrictedResource") -> oAuthImplicitController.restrictedResource
   )
 }
 
 class OAuthImplicitController() {
-  def token = AsyncAction { request =>
+  def token = Action { request =>
     val implicitAuthHandler = new OAuthImplicitAuthorizationHandler()
     val implicitFlowData = OAuthImplicitFlowData(request.httpHeader.find(_.name() == "Authorization").get, "token", None)
 
@@ -46,7 +46,7 @@ class OAuthImplicitController() {
 
   val oAuthImplicitProtectedResourceHandler = new OAuthGrantProtectedResourceHandler()
 
-  def restrictedResource = AsyncAction { Authorized(oAuthImplicitProtectedResourceHandler) { request =>
+  def restrictedResource = Action { Authorized(oAuthImplicitProtectedResourceHandler) { request =>
     Future.successful(Ok())
   }}
 }

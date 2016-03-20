@@ -31,7 +31,7 @@ class OAuthRefreshTokenRouter() extends Router {
 }
 
 class OAuthRefreshTokenController() {
-  def token = AsyncAction { request =>
+  def token = Action { request =>
     val refreshTokenAuthHandler = new OAuthRefreshTokenAuthorizationHandler()
     val refreshTokenFlowData = OAuthRefreshTokenFlowData(request.httpHeader.find(_.name() == "Authorization").get, "refresh_token", "refreshToken")
 
@@ -45,7 +45,7 @@ class OAuthRefreshTokenController() {
 
   val oAuthRefreshTokenProtectedResourceHandler = new OAuthGrantProtectedResourceHandler()
 
-  def restrictedResource = AsyncAction { Authorized(oAuthRefreshTokenProtectedResourceHandler) { request =>
+  def restrictedResource = Action { Authorized(oAuthRefreshTokenProtectedResourceHandler) { request =>
     Future.successful(Ok())
   }}
 }

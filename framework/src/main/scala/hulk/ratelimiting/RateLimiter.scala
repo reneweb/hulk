@@ -13,27 +13,6 @@ import scala.concurrent.duration.Duration
   */
 class RateLimiter(rateLimitBy: RateLimitBy, nrRequest: Int, withinTimeRange: Duration, rateLimitCache: RateLimitCache) {
 
-  def apply(f: HulkHttpRequest => HulkHttpResponse): HulkHttpRequest => Future[HulkHttpResponse] = {
-    AsyncRateLimiter(rateLimitCache)(rateLimitBy, nrRequest, withinTimeRange)(f.andThen(Future(_)))
-  }
-
-  def andThen(f: HulkHttpRequest => HulkHttpResponse) = apply(f)
-
-  private[hulk] def limitExceeded(header: Seq[HttpHeader], cookies: Seq[HttpCookiePair]): Future[Boolean] = {
-    AsyncRateLimiter(rateLimitCache)(rateLimitBy, nrRequest, withinTimeRange).limitExceeded(header, cookies)
-  }
-}
-
-object RateLimiter {
-  def apply(rateLimitBy: RateLimitBy, nrRequest: Int, withinTimeRange: Duration) =
-    new RateLimiter(rateLimitBy, nrRequest, withinTimeRange, new DefaultEhCache())
-
-  def apply(rateLimitCache: RateLimitCache)(rateLimitBy: RateLimitBy, nrRequest: Int, withinTimeRange: Duration) =
-    new RateLimiter(rateLimitBy, nrRequest, withinTimeRange, rateLimitCache)
-}
-
-class AsyncRateLimiter(rateLimitBy: RateLimitBy, nrRequest: Int, withinTimeRange: Duration, rateLimitCache: RateLimitCache) {
-
   def apply(f: HulkHttpRequest => Future[HulkHttpResponse]): HulkHttpRequest => Future[HulkHttpResponse] = {
     case request => limitExceeded(request.httpHeader, request.cookies).flatMap { limitExceeded =>
       if(limitExceeded) Future(TooManyRequests()) else f(request)
@@ -70,12 +49,12 @@ class AsyncRateLimiter(rateLimitBy: RateLimitBy, nrRequest: Int, withinTimeRange
   }
 }
 
-object AsyncRateLimiter {
+object RateLimiter {
   def apply(rateLimitBy: RateLimitBy, nrRequest: Int, withinTimeRange: Duration) =
-    new AsyncRateLimiter(rateLimitBy, nrRequest, withinTimeRange, new DefaultEhCache())
+    new RateLimiter(rateLimitBy, nrRequest, withinTimeRange, new DefaultEhCache())
 
   def apply(rateLimitCache: RateLimitCache)(rateLimitBy: RateLimitBy, nrRequest: Int, withinTimeRange: Duration) =
-    new AsyncRateLimiter(rateLimitBy, nrRequest, withinTimeRange, rateLimitCache)
+    new RateLimiter(rateLimitBy, nrRequest, withinTimeRange, rateLimitCache)
 }
 
 trait RateLimitBy

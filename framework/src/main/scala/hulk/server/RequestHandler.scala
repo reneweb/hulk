@@ -62,7 +62,7 @@ class RequestHandler(router: Router, routes: Map[RouteDefWithRegex, Action], fil
                                httpRequest: HulkHttpRequest, rawHttpRequest: HttpRequest): Future[HulkHttpResponse] = {
     matchedRoute.map { routeWithAction =>
       runAction(versionOpt, routeWithAction, httpRequest, rawHttpRequest)
-    }.getOrElse(Action { req => NotFound() }.run(httpRequest).map(Future(_)).get)
+    }.getOrElse(Action { req => Future.successful(NotFound()) }.run(httpRequest).get)
   }
 
   private def runAction(versionOpt: Option[String], routeWithAction: (RouteDefWithRegex, Action),
@@ -80,8 +80,6 @@ class RequestHandler(router: Router, routes: Map[RouteDefWithRegex, Action], fil
     }
 
     (versionOpt, routeWithAction._2) match {
-      case (Some(version), action: SyncAction) => action.run(version, httpRequest).map(Future(_)).getOrElse(Future(NotFound()))
-      case (None, action: SyncAction) => action.run(httpRequest).map(Future(_)).getOrElse(Future(NotFound()))
       case (Some(version), action: AsyncAction) => action.run(version, httpRequest).getOrElse(Future(NotFound()))
       case (None, action: AsyncAction) => action.run(httpRequest).getOrElse(Future(NotFound()))
       case (Some(version), action: WebSocketAction) => runActionForWs(Some(version), action)

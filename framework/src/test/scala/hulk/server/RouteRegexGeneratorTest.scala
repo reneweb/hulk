@@ -5,12 +5,14 @@ import hulk.http.{Action, Ok}
 import hulk.routing.{*, RouteDef, Router}
 import org.specs2.mutable.Specification
 
+import scala.concurrent.Future
+
 /**
   * Created by reweber on 07/02/2016
   */
 class RouteRegexGeneratorTest extends Specification {
 
-  val action = Action(request => Ok())
+  val action = Action(request => Future.successful(Ok()))
 
   "RouteRegexGenerator#generateRoutesWithRegex" should {
 
