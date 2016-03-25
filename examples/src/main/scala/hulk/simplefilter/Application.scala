@@ -36,7 +36,7 @@ class SimpleAuthFilter extends Filter {
     false //We just default to false here
   }
 
-  override def filter(next: Next): (HulkHttpRequest) => Future[HulkHttpResponse] = {
+  override def apply(next: Next): (HulkHttpRequest) => Future[HulkHttpResponse] = {
     case req : HulkHttpRequest if req.method == HttpMethods.POST && req.path == "/needsAuth" =>
       if(isAuthenticated) next(req) else Future(Unauthorized())
     case req: HulkHttpRequest => next(req)
@@ -44,7 +44,7 @@ class SimpleAuthFilter extends Filter {
 }
 
 class SimpleLogRequestTimeFilter extends Filter {
-  override def filter(next: Next): (HulkHttpRequest) => Future[HulkHttpResponse] = {
+  override def apply(next: Next): (HulkHttpRequest) => Future[HulkHttpResponse] = {
     case req: HulkHttpRequest =>
       val currTime = System.currentTimeMillis()
       next andThen { response =>
