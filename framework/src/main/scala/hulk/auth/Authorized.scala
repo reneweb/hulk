@@ -1,5 +1,7 @@
 package hulk.auth
 
+import hulk.filtering.Filter
+import hulk.filtering.Filter.Next
 import hulk.http.{Forbidden, HulkHttpRequest, HulkHttpResponse}
 
 import scala.concurrent.Future
@@ -9,9 +11,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
   * Created by reweber on 06/03/2016
   */
-case class Authorized[T](dataHandler: ProtectedResourceHandler[T]) {
+case class Authorized[T](dataHandler: ProtectedResourceHandler[T]) extends Filter {
 
-  def apply(f: HulkHttpRequest => Future[HulkHttpResponse]): HulkHttpRequest => Future[HulkHttpResponse] = {
+  def apply(f: Next): HulkHttpRequest => Future[HulkHttpResponse] = {
     case request =>
       val accessTokenOpt = findAccessTokenFromQueryString(request).orElse(findAccessTokenFromHeader(request))
 
@@ -28,8 +30,6 @@ case class Authorized[T](dataHandler: ProtectedResourceHandler[T]) {
         )}
       }.getOrElse(Future.successful(Forbidden()))
   }
-
-  def andThen(f: HulkHttpRequest => Future[HulkHttpResponse]) = apply(f)
 
   private def findAccessTokenFromQueryString(request: HulkHttpRequest) = request.queryParams.get("access_token")
 
