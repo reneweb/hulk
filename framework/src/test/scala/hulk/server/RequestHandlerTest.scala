@@ -4,8 +4,8 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
 import hulk.filtering.Filter.Next
-import hulk.filtering.{Filter, FilterResult}
-import hulk.http.{Action, HulkHttpRequest, Ok, Unauthorized}
+import hulk.filtering.Filter
+import hulk.http._
 import hulk.ratelimiting.{DefaultEhCache, RateLimitBy, RateLimiter, GlobalRateLimiting}
 import hulk.routing.{RouteDef, Router}
 import org.specs2.mock.Mockito
@@ -94,7 +94,7 @@ class RequestHandlerTest extends Specification with Mockito {
       }
 
       val filter = new Filter {
-        override def filter(next: Next): (HulkHttpRequest) => FilterResult = request => Future(Unauthorized())
+        override def filter(next: Next): (HulkHttpRequest) => Future[HulkHttpResponse] = request => Future(Unauthorized())
       }
 
       val handler = new RequestHandler(router, new RouteRegexGenerator(router).generateRoutesWithRegex(), Seq(filter), None)

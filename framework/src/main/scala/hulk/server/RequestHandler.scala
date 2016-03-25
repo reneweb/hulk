@@ -43,30 +43,20 @@ class RequestHandler(router: Router, routes: Map[RouteDefWithRegex, Action], fil
     val hulkHttpRequest = HulkHttpRequest(request.method, request.uri.path.toString(), request.headers, request.entity)(pathVarMap,
       request.uri.query(), request.uri.fragment)(request.cookies)
 
-    val outgoingFilterResults = executeOutgoingFilters(filters, hulkHttpRequest)
-    val incomingFilterResultOpt = findIncomingFilter(filters, outgoingFilterResults.size)
-
-    val runIncomingFilterWithRequest = runIncomingFilter(hulkHttpRequest) _
-    val response = incomingFilterResultOpt.flatMap(runIncomingFilterWithRequest)
-      .getOrElse(runActionIfMatch(versionOpt, matchedRoute, hulkHttpRequest, request))
-
-    outgoingFilterResults
-      .foldLeft(response) { case (resp, filterResult) => resp.flatMap(filterResult) }
-      .map(toAkkaHttpResponse => toAkkaHttpResponse.rawHttpResponse match {
-        case Some(rawResponse) => rawResponse
-        case _ => toAkkaHttpResponse
-      })
+    val actionFunc = runActionIfMatch(versionOpt, matchedRoute, hulkHttpRequest, request)
+    val response = filters.foldRight(actionFunc) { case (filter, func) => filter.filter(func) }.apply(hulkHttpRequest)
+    response.map(toAkkaHttpResponse => toAkkaHttpResponse)
   }
 
   private def runActionIfMatch(versionOpt: Option[String], matchedRoute: Option[(RouteDefWithRegex, Action)],
-                               httpRequest: HulkHttpRequest, rawHttpRequest: HttpRequest): Future[HulkHttpResponse] = {
+                               httpRequest: HulkHttpRequest, rawHttpRequest: HttpRequest): HulkHttpRequest => Future[HulkHttpResponse] = {
     matchedRoute.map { routeWithAction =>
       runAction(versionOpt, routeWithAction, httpRequest, rawHttpRequest)
-    }.getOrElse(Action { req => Future.successful(NotFound()) }.run(httpRequest).get)
+    }.getOrElse(httpRequest => Action { req => Future.successful(NotFound()) }.run(httpRequest).get)
   }
 
   private def runAction(versionOpt: Option[String], routeWithAction: (RouteDefWithRegex, Action),
-                        httpRequest: HulkHttpRequest, rawHttpRequest: HttpRequest): Future[HulkHttpResponse] = {
+                        httpRequest: HulkHttpRequest, rawHttpRequest: HttpRequest): HulkHttpRequest => Future[HulkHttpResponse] = {
     def runActionForWs(versionOpt: Option[String], action: WebSocketAction) = {
       val response = versionOpt.fold(action.run())(version => action.run(version))
 
@@ -80,10 +70,10 @@ class RequestHandler(router: Router, routes: Map[RouteDefWithRegex, Action], fil
     }
 
     (versionOpt, routeWithAction._2) match {
-      case (Some(version), action: AsyncAction) => action.run(version, httpRequest).getOrElse(Future(NotFound()))
-      case (None, action: AsyncAction) => action.run(httpRequest).getOrElse(Future(NotFound()))
-      case (Some(version), action: WebSocketAction) => runActionForWs(Some(version), action)
-      case (None, action: WebSocketAction) => runActionForWs(None, action)
+      case (Some(version), action: AsyncAction) => httpRequest => action.run(version, httpRequest).getOrElse(Future(NotFound()))
+      case (None, action: AsyncAction) => httpRequest => action.run(httpRequest).getOrElse(Future(NotFound()))
+      case (Some(version), action: WebSocketAction) => httpRequest => runActionForWs(Some(version), action)
+      case (None, action: WebSocketAction) => httpRequest => runActionForWs(None, action)
       case (_, _) => throw new IllegalStateException("No appropriate action to run")
     }
   }
@@ -140,29 +130,5 @@ class RequestHandler(router: Router, routes: Map[RouteDefWithRegex, Action], fil
     }.map { case (routeDef, action) =>
       (routeDef, action)
     }
-  }
-
-  private def findIncomingFilter(filtersSeq: Seq[Filter], outgoingFilterResultsSize: Int): Option[Filter] =
-    filtersSeq.lift(outgoingFilterResultsSize)
-
-  private def runIncomingFilter(httpRequest: HulkHttpRequest)(filter: Filter): Option[Future[HulkHttpResponse]] = {
-    filter.filter(r => Future(r))(httpRequest).result.swap.toOption
-  }
-
-  private def executeOutgoingFilters(filters: Seq[Filter], httpRequest: HulkHttpRequest) = {
-    def rec(filters: Seq[Filter], httpRequest: HulkHttpRequest): Seq[HulkHttpResponse => Future[HulkHttpResponse]] =
-      filters.headOption.map(f => {
-        val filterResult = f.filter(r => Future(r))(httpRequest)
-
-        filterResult.result.fold(
-          response => Seq.empty,
-          responseFunc => {
-            val returnSeq = rec(filters.tail, httpRequest)
-            returnSeq :+ responseFunc
-          }
-        )
-      }).getOrElse(Seq.empty)
-
-    rec(filters, httpRequest).reverse
   }
 }

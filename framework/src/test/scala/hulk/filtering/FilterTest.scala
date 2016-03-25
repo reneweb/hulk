@@ -15,42 +15,42 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class FilterTest extends Specification with Mockito {
 
   class TestIncomingFilter extends Filter {
-    override def filter(next: Next): (HulkHttpRequest) => FilterResult = {
+    override def filter(next: Next): (HulkHttpRequest) => Future[HulkHttpResponse] = {
       case req: HulkHttpRequest => Future(NotFound())
     }
   }
 
   class TestOutgoingFilter extends Filter {
-    override def filter(next: Next): (HulkHttpRequest) => FilterResult = {
-      case req: HulkHttpRequest => next andThen { response => Future(NotFound()) }
+    override def filter(next: Next): (HulkHttpRequest) => Future[HulkHttpResponse] = {
+      case req: HulkHttpRequest => next andThen { response => Future(NotFound()) } apply req
     }
   }
 
   class TestDontFilter extends Filter {
-    override def filter(next: Next): (HulkHttpRequest) => FilterResult = {
-      case req: HulkHttpRequest => next
+    override def filter(next: Next): (HulkHttpRequest) => Future[HulkHttpResponse] = {
+      case req: HulkHttpRequest => next(req)
     }
   }
 
   "Filter#filter" should {
     "filter request and pass direct response if request is matching filter condition and response given" >> {
-      def nextF(resp: HulkHttpResponse) =  Future(resp)
+      def nextF(req: HulkHttpRequest) =  Future(Ok())
       val filterResult = new TestIncomingFilter().filter(nextF).apply(mock[HulkHttpRequest])
-      val response = Await.result(filterResult.result.swap.toOption.get, 2 seconds)
+      val response = Await.result(filterResult, 2 seconds)
       response.statusCode.intValue() must equalTo(404)
     }
 
     "filter request, but pass through action if request is matching filter condition and req => resp func is given" >> {
-      def nextF(resp: HulkHttpResponse) =  Future(resp)
+      def nextF(req: HulkHttpRequest) =  Future(Ok())
       val filterResult = new TestOutgoingFilter().filter(nextF).apply(mock[HulkHttpRequest])
-      val response = Await.result(filterResult.result.toOption.get.apply(Ok()), 2 seconds)
+      val response = Await.result(filterResult, 2 seconds)
       response.statusCode.intValue() must equalTo(404)
     }
 
     "not filter request if not matching filter condition" >> {
-      def nextF(resp: HulkHttpResponse) =  Future(resp)
+      def nextF(req: HulkHttpRequest) =  Future(Ok())
       val filterResult = new TestDontFilter().filter(nextF).apply(mock[HulkHttpRequest])
-      val response = Await.result(filterResult.result.toOption.get.apply(Ok()), 2 seconds)
+      val response = Await.result(filterResult, 2 seconds)
       response.statusCode.intValue() must equalTo(200)
     }
   }

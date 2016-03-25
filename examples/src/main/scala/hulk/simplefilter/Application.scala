@@ -3,7 +3,7 @@ package hulk.simplefilter
 import akka.http.scaladsl.model.HttpMethods
 import hulk.HulkHttpServer
 import hulk.filtering.Filter.Next
-import hulk.filtering.{FilterResult, Filter, Filters}
+import hulk.filtering.{Filter, Filters}
 import hulk.http._
 import hulk.routing._
 
@@ -36,15 +36,15 @@ class SimpleAuthFilter extends Filter {
     false //We just default to false here
   }
 
-  override def filter(next: Next): (HulkHttpRequest) => FilterResult = {
-    case HulkHttpRequest(HttpMethods.POST, "/needsAuth", _, _) =>
-      if(isAuthenticated) next else Future(Unauthorized())
-    case req: HulkHttpRequest => next
+  override def filter(next: Next): (HulkHttpRequest) => Future[HulkHttpResponse] = {
+    case req : HulkHttpRequest if req.method == HttpMethods.POST && req.path == "/needsAuth" =>
+      if(isAuthenticated) next(req) else Future(Unauthorized())
+    case req: HulkHttpRequest => next(req)
   }
 }
 
 class SimpleLogRequestTimeFilter extends Filter {
-  override def filter(next: Next): (HulkHttpRequest) => FilterResult = {
+  override def filter(next: Next): (HulkHttpRequest) => Future[HulkHttpResponse] = {
     case req: HulkHttpRequest =>
       val currTime = System.currentTimeMillis()
       next andThen { response =>
@@ -53,7 +53,7 @@ class SimpleLogRequestTimeFilter extends Filter {
         println(s"$t ms")
 
         response
-      }
+      } apply req
   }
 }
 
