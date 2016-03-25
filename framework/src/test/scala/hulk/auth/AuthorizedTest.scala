@@ -106,7 +106,7 @@ class AuthorizedTest extends Specification with Mockito {
 
       def f(request: HulkHttpRequest) = Future.successful(Ok())
 
-      val responseFuture = authorized.andThen(f).apply(mockedHttpRequest)
+      val responseFuture = authorized.and(f).apply(mockedHttpRequest)
       val response = Await.result(responseFuture, 5 seconds)
 
       response.statusCode.intValue() must equalTo(200)

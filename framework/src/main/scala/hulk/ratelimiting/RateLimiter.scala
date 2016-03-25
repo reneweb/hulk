@@ -2,6 +2,8 @@ package hulk.ratelimiting
 
 import akka.http.scaladsl.model.HttpHeader
 import akka.http.scaladsl.model.headers.HttpCookiePair
+import hulk.filtering.Filter
+import hulk.filtering.Filter.Next
 import hulk.http.{HulkHttpRequest, HulkHttpResponse, TooManyRequests}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -11,15 +13,13 @@ import scala.concurrent.duration.Duration
 /**
   * Created by reweber on 13/01/2016
   */
-class RateLimiter(rateLimitBy: RateLimitBy, nrRequest: Int, withinTimeRange: Duration, rateLimitCache: RateLimitCache) {
+class RateLimiter(rateLimitBy: RateLimitBy, nrRequest: Int, withinTimeRange: Duration, rateLimitCache: RateLimitCache) extends Filter {
 
-  def apply(f: HulkHttpRequest => Future[HulkHttpResponse]): HulkHttpRequest => Future[HulkHttpResponse] = {
+  def apply(f: Next): HulkHttpRequest => Future[HulkHttpResponse] = {
     case request => limitExceeded(request.httpHeader, request.cookies).flatMap { limitExceeded =>
       if(limitExceeded) Future(TooManyRequests()) else f(request)
     }
   }
-
-  def andThen(f: HulkHttpRequest => Future[HulkHttpResponse]) = apply(f)
 
   private[hulk] def limitExceeded(header: Seq[HttpHeader], cookies: Seq[HttpCookiePair]): Future[Boolean] = {
     rateLimitBy match {

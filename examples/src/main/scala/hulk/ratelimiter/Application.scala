@@ -38,7 +38,7 @@ class RateLimitedController() {
     Future.successful(Ok())
   }}
 
-  def multiple = Action { RateLimiter(RateLimitBy.ip, 5, 2 seconds) andThen RateLimiter(RateLimitBy.cookie("session"), 3, 4 seconds) { request =>
+  def multiple = Action { RateLimiter(RateLimitBy.ip, 5, 2 seconds) and RateLimiter(RateLimitBy.cookie("session"), 3, 4 seconds) { request =>
     Future.successful(Ok())
   }}
 }
