@@ -44,7 +44,7 @@ class RequestHandler(router: Router, routes: Map[RouteDefWithRegex, Action], fil
       request.uri.query(), request.uri.fragment)(request.cookies)
 
     val actionFunc = runActionIfMatch(versionOpt, matchedRoute, hulkHttpRequest, request)
-    val response = filters.foldRight(actionFunc) { case (filter, func) => filter.filter(func) }.apply(hulkHttpRequest)
+    val response = filters.foldRight(actionFunc) { case (filter, func) => filter.apply(func) }.apply(hulkHttpRequest)
     response.map(toAkkaHttpResponse => toAkkaHttpResponse)
   }
 

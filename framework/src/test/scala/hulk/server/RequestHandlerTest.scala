@@ -94,7 +94,7 @@ class RequestHandlerTest extends Specification with Mockito {
       }
 
       val filter = new Filter {
-        override def filter(next: Next): (HulkHttpRequest) => Future[HulkHttpResponse] = request => Future(Unauthorized())
+        override def apply(next: Next): (HulkHttpRequest) => Future[HulkHttpResponse] = request => Future(Unauthorized())
       }
 
       val handler = new RequestHandler(router, new RouteRegexGenerator(router).generateRoutesWithRegex(), Seq(filter), None)

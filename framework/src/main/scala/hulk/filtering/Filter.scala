@@ -9,7 +9,8 @@ import scala.concurrent.Future
   * Created by reweber on 18/12/2015
   */
 trait Filter {
-  def filter(next: Next): HulkHttpRequest => Future[HulkHttpResponse]
+  def apply(next: Next): HulkHttpRequest => Future[HulkHttpResponse]
+  def and(next: Next): HulkHttpRequest => Future[HulkHttpResponse] = apply(next)
 }
 
 object Filter {
