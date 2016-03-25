@@ -28,7 +28,7 @@ class DefaultWebSocketSenderActorTest extends Specification {
       source.to(Sink.actorRef(probe.ref, "completed")).run()
       actor ! TextMessage("test")
 
-      val result = probe.expectMsg(500.millis, TextMessage("test"))
+      val result = probe.expectMsg(1000.millis, TextMessage("test"))
       result must equalTo(TextMessage("test"))
     }
 
