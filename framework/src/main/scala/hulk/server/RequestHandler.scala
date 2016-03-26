@@ -58,15 +58,20 @@ class RequestHandler(router: Router, routes: Map[RouteDefWithRegex, Action], fil
   private def runAction(versionOpt: Option[String], routeWithAction: (RouteDefWithRegex, Action),
                         httpRequest: HulkHttpRequest, rawHttpRequest: HttpRequest): HulkHttpRequest => Future[HulkHttpResponse] = {
     def runActionForWs(versionOpt: Option[String], action: WebSocketAction) = {
-      val response = versionOpt.fold(action.run())(version => action.run(version))
+      val wsChannel = versionOpt.fold(action.run())(version => action.run(version))
 
-      rawHttpRequest.header[UpgradeToWebSocket] match {
-        case  Some(upgrade) =>
-          response.map { case (sender, receiver) =>
-            HulkHttpResponse.fromAkkaHttpResponse(upgrade.handleMessagesWithSinkSource(Sink.foreach(receiver), sender))
-          }.getOrElse(Future(NotFound()))
-        case _ => Future(NotFound())
-      }
+      wsChannel.map { case (wsFilters, sender, receiver) =>
+
+        val actionFunc = (httpRequest: HulkHttpRequest) => {
+          rawHttpRequest.header[UpgradeToWebSocket] match {
+            case Some(upgrade) =>
+              HulkHttpResponse.fromAkkaHttpResponse(upgrade.handleMessagesWithSinkSource(Sink.foreach(receiver), sender))
+            case _ => Future(NotFound())
+          }
+        }
+
+        wsFilters.foldRight(actionFunc) { case (filter, func) => filter(func) } apply httpRequest
+      }.getOrElse(Future(NotFound()))
     }
 
     (versionOpt, routeWithAction._2) match {

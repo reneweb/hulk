@@ -2,6 +2,8 @@ package hulk.http
 
 import akka.http.scaladsl.model.ws.{TextMessage, Message}
 import akka.stream.scaladsl.Source
+import hulk.filtering.Filter
+import hulk.filtering.Filter.Next
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 
@@ -45,7 +47,7 @@ class ActionTest extends Specification with Mockito {
   }
 
   "WebSocketAction#run" should {
-    "run action" >> {
+    "give source and sender func" >> {
       val source = Source.single( TextMessage(""))
       val func = (msg: Message) => {}
 
@@ -54,12 +56,13 @@ class ActionTest extends Specification with Mockito {
 
       resultOpt must beSome
 
-      val (sourceRes, funcRes) = resultOpt.get
+      val (filters, sourceRes, funcRes) = resultOpt.get
+      filters must beEmpty
       sourceRes must equalTo(source)
       funcRes must equalTo(funcRes)
     }
 
-    "run action of specified version" >> {
+    "give source and sender func of specified version" >> {
       val source = Source.single( TextMessage(""))
       val func = (msg: Message) => {}
 
@@ -68,12 +71,13 @@ class ActionTest extends Specification with Mockito {
 
       resultOpt must beSome
 
-      val (sourceRes, funcRes) = resultOpt.get
+      val (filters, sourceRes, funcRes) = resultOpt.get
+      filters must beEmpty
       sourceRes must equalTo(source)
       funcRes must equalTo(funcRes)
     }
 
-    "return none if running action with non existent version" >> {
+    "return none if calling action with non existent version" >> {
       val source = Source.single( TextMessage(""))
       val func = (msg: Message) => {}
 
@@ -81,6 +85,26 @@ class ActionTest extends Specification with Mockito {
       val resultOpt = action.run("v2")
 
       resultOpt must beNone
+    }
+
+    "give filters, source and sender func if filter is set " >> {
+      val source = Source.single( TextMessage(""))
+      val func = (msg: Message) => {}
+      val filter = new Filter {
+        override def apply(next: Next): (HulkHttpRequest) => Future[HulkHttpResponse] = {
+          case req => Future.successful(Unauthorized())
+        }
+      }
+
+      val action = WebSocketAction(Seq(filter), source, func)
+      val resultOpt = action.run()
+
+      resultOpt must beSome
+
+      val (filters, sourceRes, funcRes) = resultOpt.get
+      filters must haveLength(1)
+      sourceRes must equalTo(source)
+      funcRes must equalTo(funcRes)
     }
   }
 }
