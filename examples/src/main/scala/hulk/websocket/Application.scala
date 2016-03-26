@@ -8,7 +8,9 @@ import akka.stream.scaladsl._
 import hulk.HulkHttpServer
 import hulk.http._
 import hulk.http.ws.DefaultWebSocketSenderActor
+import hulk.ratelimiting.{RateLimitBy, RateLimiter}
 import hulk.routing.{RouteDef, Router}
+import scala.concurrent.duration._
 
 /**
   * Created by reweber on 24/02/2016
@@ -23,7 +25,8 @@ class SimpleRouter() extends Router {
   val simpleController = new SimpleController()
 
   override def router: Map[RouteDef, Action] = Map(
-    (HttpMethods.GET, "/wsTest") -> simpleController.testGet
+    (HttpMethods.GET, "/wsTest") -> simpleController.testGet,
+    (HttpMethods.GET, "/wsTestFilter") -> simpleController.testGetFilter
   )
 }
 
@@ -33,6 +36,11 @@ class SimpleController() {
 
 
   def testGet = WebSocketAction(Source.fromPublisher(ActorPublisher(senderActor)), { msg => msg match {
+    case TextMessage.Strict(txt) => senderActor ! TextMessage.Strict(s"Response: $txt")
+    case _ => //ignore
+  }})
+
+  def testGetFilter = WebSocketAction(Seq(RateLimiter(RateLimitBy.ip, 5, 5 seconds)), Source.fromPublisher(ActorPublisher(senderActor)), { msg => msg match {
     case TextMessage.Strict(txt) => senderActor ! TextMessage.Strict(s"Response: $txt")
     case _ => //ignore
   }})
