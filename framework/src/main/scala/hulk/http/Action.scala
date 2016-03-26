@@ -2,6 +2,7 @@ package hulk.http
 
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.scaladsl.Source
+import hulk.filtering.Filter
 
 import scala.concurrent.Future
 
@@ -16,8 +17,8 @@ trait AsyncAction {
 }
 
 trait WebSocketAction {
-  def run(): Option[(Source[Message, _], Message => Unit)]
-  def run(version: String): Option[(Source[Message, _], Message => Unit)]
+  def run(): Option[(Seq[Filter], Source[Message, _], Message => Unit)]
+  def run(version: String): Option[(Seq[Filter], Source[Message, _], Message => Unit)]
 }
 
 object Action {
@@ -36,12 +37,22 @@ object Action {
 
 object WebSocketAction {
   def apply(sender: Source[Message, _], receiver: Message => Unit) = new Action with WebSocketAction {
-    override def run() = Some(sender, receiver)
+    override def run() = Some(Seq.empty, sender, receiver)
     override def run(version: String) = None
   }
 
   def apply(versionedActions: (String, (Source[Message, _], Message => Unit))*) = new Action with WebSocketAction {
     override def run() = None
-    override def run(version: String) = versionedActions.find(_._1 == version).map(a => a._2)
+    override def run(version: String) = versionedActions.find(_._1 == version).map(a => (Seq.empty, a._2._1, a._2._2))
+  }
+
+  def apply(filters: Seq[Filter], sender: Source[Message, _], receiver: Message => Unit) = new Action with WebSocketAction {
+    override def run() = Some(filters, sender, receiver)
+    override def run(version: String) = None
+  }
+
+  def apply(filters: Seq[Filter], versionedActions: (String, (Source[Message, _], Message => Unit))*) = new Action with WebSocketAction {
+    override def run() = None
+    override def run(version: String) = versionedActions.find(_._1 == version).map(a => (filters, a._2._1, a._2._2))
   }
 }
