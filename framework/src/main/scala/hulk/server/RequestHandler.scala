@@ -57,8 +57,8 @@ class RequestHandler(router: Router, routes: Map[RouteDefWithRegex, Action], fil
 
   private def runAction(versionOpt: Option[String], routeWithAction: (RouteDefWithRegex, Action),
                         httpRequest: HulkHttpRequest, rawHttpRequest: HttpRequest): HulkHttpRequest => Future[HulkHttpResponse] = {
-    def runActionForWs(versionOpt: Option[String], action: WebSocketAction) = {
-      val wsChannel = versionOpt.fold(action.run())(version => action.run(version))
+    def runActionForWs(versionOpt: Option[String], httpRequest: HulkHttpRequest, action: WebSocketAction) = {
+      val wsChannel = versionOpt.fold(action.run(httpRequest))(version => action.run(version, httpRequest))
 
       wsChannel.map { case (wsFilters, sender, receiver) =>
 
@@ -77,8 +77,8 @@ class RequestHandler(router: Router, routes: Map[RouteDefWithRegex, Action], fil
     (versionOpt, routeWithAction._2) match {
       case (Some(version), action: AsyncAction) => httpRequest => action.run(version, httpRequest).getOrElse(Future(NotFound()))
       case (None, action: AsyncAction) => httpRequest => action.run(httpRequest).getOrElse(Future(NotFound()))
-      case (Some(version), action: WebSocketAction) => httpRequest => runActionForWs(Some(version), action)
-      case (None, action: WebSocketAction) => httpRequest => runActionForWs(None, action)
+      case (Some(version), action: WebSocketAction) => httpRequest => runActionForWs(Some(version), httpRequest, action)
+      case (None, action: WebSocketAction) => httpRequest => runActionForWs(None, httpRequest, action)
       case (_, _) => throw new IllegalStateException("No appropriate action to run")
     }
   }

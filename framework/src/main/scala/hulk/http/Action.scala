@@ -1,6 +1,8 @@
 package hulk.http
 
+import akka.actor.ActorRef
 import akka.http.scaladsl.model.ws.Message
+import akka.stream.actor.ActorPublisher
 import akka.stream.scaladsl.Source
 import hulk.filtering.Filter
 
@@ -17,8 +19,8 @@ trait AsyncAction {
 }
 
 trait WebSocketAction {
-  def run(): Option[(Seq[Filter], Source[Message, _], Message => Unit)]
-  def run(version: String): Option[(Seq[Filter], Source[Message, _], Message => Unit)]
+  def run(request: HulkHttpRequest): Option[(Seq[Filter], Source[Message, _], Message => Unit)]
+  def run(version: String, request: HulkHttpRequest): Option[(Seq[Filter], Source[Message, _], Message => Unit)]
 }
 
 object Action {
@@ -36,23 +38,37 @@ object Action {
 }
 
 object WebSocketAction {
-  def apply(sender: Source[Message, _], receiver: Message => Unit) = new Action with WebSocketAction {
-    override def run() = Some(Seq.empty, sender, receiver)
-    override def run(version: String) = None
+  def apply(f: HulkHttpRequest => (ActorRef, Message => Unit)) = new Action with WebSocketAction {
+    override def run(request: HulkHttpRequest) = {
+      val (senderActor, receiverF) = f(request)
+      Some(Seq.empty, Source.fromPublisher(ActorPublisher(senderActor)), receiverF)
+    }
+    override def run(version: String, request: HulkHttpRequest) = None
   }
 
-  def apply(versionedActions: (String, (Source[Message, _], Message => Unit))*) = new Action with WebSocketAction {
-    override def run() = None
-    override def run(version: String) = versionedActions.find(_._1 == version).map(a => (Seq.empty, a._2._1, a._2._2))
+  def apply(versionedActions: (String, (HulkHttpRequest => (ActorRef, Message => Unit)))*) = new Action with WebSocketAction {
+    override def run(request: HulkHttpRequest) = None
+    override def run(version: String, request: HulkHttpRequest) = {
+      versionedActions.find(_._1 == version).map { a =>
+        val (senderActor, receiverF) = a._2(request)
+        (Seq.empty, Source.fromPublisher(ActorPublisher(senderActor)), receiverF)}
+    }
   }
 
-  def apply(filters: Seq[Filter], sender: Source[Message, _], receiver: Message => Unit) = new Action with WebSocketAction {
-    override def run() = Some(filters, sender, receiver)
-    override def run(version: String) = None
+  def apply(filters: Seq[Filter], f: HulkHttpRequest => (ActorRef, Message => Unit)) = new Action with WebSocketAction {
+    override def run(request: HulkHttpRequest) = {
+      val (senderActor, receiverF) = f(request)
+      Some(filters, Source.fromPublisher(ActorPublisher(senderActor)), receiverF)
+    }
+    override def run(version: String, request: HulkHttpRequest) = None
   }
 
-  def apply(filters: Seq[Filter], versionedActions: (String, (Source[Message, _], Message => Unit))*) = new Action with WebSocketAction {
-    override def run() = None
-    override def run(version: String) = versionedActions.find(_._1 == version).map(a => (filters, a._2._1, a._2._2))
+  def apply(filters: Seq[Filter], versionedActions: (String, (HulkHttpRequest => (ActorRef, Message => Unit)))*) = new Action with WebSocketAction {
+    override def run(request: HulkHttpRequest) = None
+    override def run(version: String, request: HulkHttpRequest) = {
+      versionedActions.find(_._1 == version).map { a =>
+        val (senderActor, receiverF) = a._2(request)
+        (filters, Source.fromPublisher(ActorPublisher(senderActor)), receiverF)}
+    }
   }
 }
