@@ -49,48 +49,50 @@ class ActionTest extends Specification with Mockito {
 
   "WebSocketAction#run" should {
     "give source and sender func" >> {
-      val actor = mock[ActorRef]
+      val source = Source.single( TextMessage(""))
       val func = (msg: Message) => {}
       val request = mock[HulkHttpRequest]
 
-      val action = WebSocketAction.apply((r: HulkHttpRequest) => (actor, func))
+      val action = WebSocketAction.apply((r: HulkHttpRequest) => (source, func))
       val resultOpt = action.run(request)
 
       resultOpt must beSome
 
       val (filters, sourceRes, funcRes) = resultOpt.get
       filters must beEmpty
+      sourceRes must equalTo(source)
       funcRes must equalTo(funcRes)
     }
 
     "give source and sender func of specified version" >> {
-      val actor = mock[ActorRef]
+      val source = Source.single( TextMessage(""))
       val func = (msg: Message) => {}
       val request = mock[HulkHttpRequest]
 
-      val action = WebSocketAction.apply("v1" -> ((r: HulkHttpRequest) => (actor, func)))
+      val action = WebSocketAction.apply("v1" -> ((r: HulkHttpRequest) => (source, func)))
       val resultOpt = action.run("v1", request)
 
       resultOpt must beSome
 
       val (filters, sourceRes, funcRes) = resultOpt.get
       filters must beEmpty
+      sourceRes must equalTo(source)
       funcRes must equalTo(funcRes)
     }
 
     "return none if calling action with non existent version" >> {
-      val actor = mock[ActorRef]
+      val source = Source.single( TextMessage(""))
       val func = (msg: Message) => {}
       val request = mock[HulkHttpRequest]
 
-      val action = WebSocketAction.apply("v1" -> ((r: HulkHttpRequest) => (actor, func)))
+      val action = WebSocketAction.apply("v1" -> ((r: HulkHttpRequest) => (source, func)))
       val resultOpt = action.run("v2", request)
 
       resultOpt must beNone
     }
 
     "give filters, source and sender func if filter is set " >> {
-      val actor = mock[ActorRef]
+      val source = Source.single( TextMessage(""))
       val func = (msg: Message) => {}
       val request = mock[HulkHttpRequest]
       val filter = new Filter {
@@ -99,13 +101,14 @@ class ActionTest extends Specification with Mockito {
         }
       }
 
-      val action = WebSocketAction(Seq(filter), (r: HulkHttpRequest) => (actor, func))
+      val action = WebSocketAction(Seq(filter), (r: HulkHttpRequest) => (source, func))
       val resultOpt = action.run(request)
 
       resultOpt must beSome
 
       val (filters, sourceRes, funcRes) = resultOpt.get
       filters must haveLength(1)
+      sourceRes must equalTo(source)
       funcRes must equalTo(funcRes)
     }
   }
