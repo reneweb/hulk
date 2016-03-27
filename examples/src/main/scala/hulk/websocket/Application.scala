@@ -36,14 +36,14 @@ class SimpleController() {
   val senderActor = system.actorOf(Props(classOf[DefaultWebSocketSenderActor], None))
 
   def testGet = WebSocketAction { request =>
-    (senderActor, {
+    (Source.fromPublisher(ActorPublisher(senderActor)), {
       case TextMessage.Strict(txt) => senderActor ! TextMessage.Strict(s"Response: $txt")
       case _ => //ignore
     })
   }
 
   def testGetFilter = WebSocketAction(Seq(RateLimiter(RateLimitBy.ip, 5, 5 seconds)), { request =>
-    (senderActor, {
+    (Source.fromPublisher(ActorPublisher(senderActor)), {
       case TextMessage.Strict(txt) => senderActor ! TextMessage.Strict(s"Response: $txt")
       case _ => //ignore
     })
@@ -53,7 +53,7 @@ class SimpleController() {
 
     val currActor = system.actorOf(Props(classOf[DefaultWebSocketSenderActor], None))
 
-    (currActor, {
+    (Source.fromPublisher(ActorPublisher(currActor)), {
       case TextMessage.Strict(txt) => currActor ! TextMessage.Strict(s"Response: $txt")
       case _ => //ignore
     })
