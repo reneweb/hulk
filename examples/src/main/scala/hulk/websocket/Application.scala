@@ -26,7 +26,8 @@ class SimpleRouter() extends Router {
 
   override def router: Map[RouteDef, Action] = Map(
     (HttpMethods.GET, "/wsTest") -> simpleController.testGet,
-    (HttpMethods.GET, "/wsTestFilter") -> simpleController.testGetFilter
+    (HttpMethods.GET, "/wsTestFilter") -> simpleController.testGetFilter,
+    (HttpMethods.GET, "/wsTestDifferentActor") -> simpleController.testGetDifferentActorEcho
   )
 }
 
@@ -44,6 +45,16 @@ class SimpleController() {
   def testGetFilter = WebSocketAction(Seq(RateLimiter(RateLimitBy.ip, 5, 5 seconds)), { request =>
     (senderActor, {
       case TextMessage.Strict(txt) => senderActor ! TextMessage.Strict(s"Response: $txt")
+      case _ => //ignore
+    })
+  })
+
+  def testGetDifferentActorEcho = WebSocketAction(Seq(RateLimiter(RateLimitBy.ip, 5, 5 seconds)), { request =>
+
+    val currActor = system.actorOf(Props(classOf[DefaultWebSocketSenderActor], None))
+
+    (currActor, {
+      case TextMessage.Strict(txt) => currActor ! TextMessage.Strict(s"Response: $txt")
       case _ => //ignore
     })
   })
