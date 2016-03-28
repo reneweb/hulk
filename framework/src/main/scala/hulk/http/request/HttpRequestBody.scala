@@ -39,6 +39,14 @@ case class HttpRequestBody(private val requestEntity: RequestEntity)(implicit ac
     requestEntity.toStrict(1 second).map(e => e.data.utf8String)
   }
 
+  def asForm(): Future[Map[String, String]] = {
+    def splitForm(input: String) = input.split("&").map(_.split("=")).map { case Array(x, y) => (x,y) }
+
+    requestEntity.toStrict(1 second)
+      .map(_.data.utf8String)
+      .map(splitForm(_).toMap)
+  }
+
   private def parseStringToJsonOpt(jsonString: String): Option[JsValue] = Try(Json.parse(jsonString)).toOption
 
   private def parseStringToJsResult(jsonString: String): JsResult[JsValue] = {

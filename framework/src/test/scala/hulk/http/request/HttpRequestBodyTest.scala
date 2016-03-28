@@ -1,7 +1,7 @@
 package hulk.http.request
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, RequestEntity}
+import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
@@ -118,6 +118,20 @@ class HttpRequestBodyTest extends Specification with Mockito {
       val content = Await.result(contentFuture, 5 seconds)
 
       content must haveClass[JsError]
+    }
+  }
+
+  "HttpRequestBody#asForm" should {
+    "pass body as form map" >> {
+      val contentType = ContentType(MediaTypes.`application/x-www-form-urlencoded`, HttpCharsets.`UTF-8`)
+      val rawEntity = HttpEntity.Strict(contentType, ByteString("testKey=testValue&otherKey=otherValue"))
+      val body = HttpRequestBody(rawEntity)
+
+      val contentFuture = body.asForm()
+      val content = Await.result(contentFuture, 5 seconds)
+
+      content("testKey") must equalTo("testValue")
+      content("otherKey") must equalTo("otherValue")
     }
   }
 }
