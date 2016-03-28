@@ -18,11 +18,6 @@ Features include:
 - Built in metrics
 - OAuth server
 
-Features yet to come:
-
-- HAL/ Json LD support
-- Performance Testing support
-
 ## Getting started ##
 
 ### Set up dependency ###
